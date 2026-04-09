@@ -1,0 +1,1 @@
+gap_px=274, max_gap_seen=274, match=0.992, latch_mode=False, state=INSPECT

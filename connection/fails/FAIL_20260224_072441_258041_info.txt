@@ -1,0 +1,1 @@
+baseline=321, boundary_med=327, gap=6, gap_med=6, bdbg={'reason': 'near', 'conf': 2.267729016020894, 'idx': 323, 'a': 316, 'b': 381, 't0': 316, 't1': 324}

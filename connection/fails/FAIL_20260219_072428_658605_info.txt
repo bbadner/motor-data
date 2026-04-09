@@ -1,0 +1,1 @@
+gap_px=5, max_gap_seen=5, match_score=0.661

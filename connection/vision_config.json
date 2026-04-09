@@ -1,0 +1,40 @@
+{
+  "seam_quad_in_template": [
+    [
+      646,
+      196
+    ],
+    [
+      711,
+      196
+    ],
+    [
+      711,
+      216
+    ],
+    [
+      646,
+      216
+    ]
+  ],
+  "warp_size": {
+    "w": 420,
+    "h": 400
+  },
+  "baseline_boundary_x": null,
+  "notes": {
+    "template_roi_in_frame": [
+      417,
+      646,
+      905,
+      764
+    ],
+    "seam_roi_in_frame": [
+      1063,
+      842,
+      65,
+      20
+    ],
+    "created": "20260309_085540_337697"
+  }
+}

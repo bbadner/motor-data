@@ -1,0 +1,1 @@
+baseline=300, boundary_med=319, gap=19, orb={'matches': 100, 'inliers': 94, 'inlier_ratio': 0.94}, boundary_dbg={'peak': 2.613232135772705, 'med': 0.4356570839881897, 'idx': 327, 'a': 295, 'b': 360, 'conf': 2.1775750517845154}

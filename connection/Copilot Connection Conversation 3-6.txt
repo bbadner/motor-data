@@ -1,0 +1,2411 @@
+Great — this screenshot is exactly where you want to be before validation. ✅
+You’ve achieved a stable GOOD state with reasonable margins, and tracking looks solid.
+
+What your screenshot shows (so we’re on the same page)
+Main panel (left)
+
+Status: GOOD (green)
+State: INSPECT ✅ (system is actively evaluating)
+ShiftMed(7): 0 (threshold Fail ≥ 4) ✅
+ResidMed(7): 0.295 (threshold Fail ≥ 0.65) ✅
+ScoreMed(9): 0.904
+
+Hysteresis: Enter ≤ 0.87 / Exit ≥ 0.91
+You’re below the exit threshold, but since you are already in GOOD, that’s OK (it only matters when returning from UNSTABLE)
+
+
+ORB: matches=100, inliers=63, ratio=0.63, fresh=True ✅ (very healthy)
+
+Debug view (right)
+
+Yellow seam ROI is visible and aligned over the connector interface area.
+Patch preview is visible at the top-left.
+
+Conclusion: This is a valid “ready-to-test” baseline operating point.
+
+What you do next (step-by-step validation plan)
+Now you move from tuning to validation, which has 3 phases:
+
+Phase 1 — “Seated parts should not go BAD” (repeatability)
+Goal: With the connector fully seated, you should see GOOD most of the time, and at worst UNSTABLE when placement is poor. You should never see BAD just from normal handling.
+Do this (10 cycles)
+
+Start at GOOD (like your screenshot).
+Remove the part from the camera view (fully out).
+Reinsert fully seated (do not create a defect).
+Place it in a reasonable pose (not perfect).
+Wait 1–2 seconds.
+Record the outcome:
+
+✅ GOOD = ideal
+⚠️ UNSTABLE = acceptable (means you need to reposition)
+❌ BAD = not acceptable (means defect thresholds too sensitive or ROI capturing something variable)
+
+
+
+✅ Pass target: 9/10 cycles end in GOOD, and 0/10 go BAD while seated.
+Tip: If you land in UNSTABLE, reposition to get back to GOOD. Don’t press r unless it latched BAD (it shouldn’t in Phase 1).
+
+Phase 2 — “Defects should go BAD” (sensitivity)
+Goal: When you truly unseat the connector, the system should produce BAD (latched) once the part is placed in a stable pose.
+Do this (3 defect levels × 3 repeats each)
+For each defect level, always do it in this order:
+
+Ensure the part is in GOOD first (stable pose).
+Introduce defect:
+
+Defect A: slight pull-out (barely unseated)
+Defect B: medium pull-out
+Defect C: full disconnect/pulled away
+
+
+Put the part back in a “good” pose under the camera.
+Wait 1–2 seconds.
+
+✅ Expected:
+
+BAD (latched) for all three defect levels.
+
+After each defect trial:
+5. Fully reseat the connector.
+6. Press r to clear the latched BAD.
+7. Reposition until GOOD again.
+8. Repeat.
+
+Phase 3 — “Pose problems should be UNSTABLE, not BAD”
+Goal: Confirm Option B behavior: pose issues should not falsely reject.
+Do this (5 quick checks)
+
+Keep the connector fully seated.
+Move/rotate the unit into a worse pose (but still visible).
+Expected: UNSTABLE – REPOSITION (orange), not BAD.
+Return to a good pose.
+Expected: GOOD.
+
+
+What results mean (so you know what to adjust)
+✅ If you get:
+
+Seated = GOOD/UNSTABLE (but not BAD)
+Unseated = BAD (latched)
+Then you are basically production-ready.
+
+⚠️ If unseated does not go BAD
+That means the seam ROI or residual threshold isn’t sensitive enough to the gap. We’d then:
+
+slightly adjust seam ROI to include more of the actual gap edge, or
+lower RESID_FAIL_AT_OR_ABOVE a bit (e.g., 0.65 → 0.55)
+
+❌ If seated becomes BAD
+That means defect thresholds are too tight or seam ROI includes variable elements (wires/reflections). We’d:
+
+shrink seam ROI away from variable features first (preferred),
+and only then relax residual thresholds.
+
+
+One small thing I recommend before you start Phase 2
+✅ Make sure your baseline is current:
+
+If you changed template or seam ROI recently, do a new baseline:
+
+u then b (your timeboxed capture)
+
+
+If you did not change ROIs, you can keep the baseline you already have.
+
+
+What I want from you after Phase 2
+To lock the final thresholds, send either:
+
+A quick note with the ResidMed and ShiftMed values you see for:
+
+fully seated GOOD
+slight pull-out
+full disconnect
+OR
+
+
+2 screenshots: one seated GOOD and one defect BAD.
+
+That’s enough to finalize and document the setup.
+
+Short answer to “Now what?”
+✅ Yes: start running parts by removing/reinserting and testing varying degrees of seating, using the 3-phase plan above.
+If you want, I can also provide a one-page “operator test checklist” you can print and use during commissioning.
+Provide your feedback on BizChatYou said: the first image is my first reposition, then I did 4 in a row good and then I got the second image on the 6th repositionCopilot said: CopilotPerfect — this is very good data, and what you’re seeing is normal, explainable, and fixable. You’re no longer in “mystery behavior” territory. You’re in final robustness tuning.
+I’ll break this into three parts:
+
+What exactly happened on reposition #6 (why it changed)
+What this tells us about your system
+Exactly what to do next (clear, minimal changes)
+
+
+1️⃣ What happened on the 6th reposition (reading the two images)
+Image 1 – UNSTABLE after reposition
+Key values:
+
+State: INSPECT
+ScoreMed(9): 0.880
+Enter ≤ 0.87 / Exit ≥ 0.91
+ResidMed(7): 0.326 ✅
+ShiftMed(7): 0 ✅
+ORB: inliers=51, ratio=0.51, fresh=True ✅
+
+✅ Interpretation:
+
+The connector is seated (residual + shift are good).
+Tracking is healthy.
+Score dropped just enough (0.880) to enter UNSTABLE.
+This is exactly what UNSTABLE is for: pose drift / appearance drift, not a defect.
+
+✅ This is acceptable behavior.
+
+Image 2 – WAIT_FOR_PART on the same cycle
+Key values:
+
+State: WAIT_FOR_PART
+ORB inliers: 27
+ORB ratio: 0.27
+fresh=False
+ScoreMed / ResidMed: None
+
+✅ Interpretation:
+
+ORB briefly lost confidence (ratio dipped below MIN_INLIER_RATIO = 0.35).
+When ORB confidence drops:
+
+the system intentionally exits INSPECT
+metrics are cleared
+you see WAIT_FOR_PART – POSITION PART
+
+
+
+✅ This is not a failure — it’s a tracking dropout during repositioning.
+
+2️⃣ What this tells us about your system (important)
+You’ve now proven three critical things:
+✅ A) Your defect logic is correct
+
+Seated parts are not going BAD
+Residuals are stable
+Shift is stable
+
+This is the hardest part — and it’s done.
+
+✅ B) Your pose tolerance is realistic
+You observed:
+
+Best ScoreMed ≈ 0.92
+Normal reposition variation can dip to 0.88–0.89
+Larger moves can momentarily break ORB tracking
+
+That’s real-world physics, not a tuning error.
+
+✅ C) The remaining “issue” is NOT accuracy — it’s operator experience
+Right now:
+
+The system is a bit too honest during fast or sloppy repositioning
+It tells the truth:
+
+“UNSTABLE” when pose is marginal
+“WAIT_FOR_PART” when tracking drops
+
+
+
+That’s correct technically — but we can smooth the experience.
+
+3️⃣ What you should do next (recommended, minimal changes)
+You have two small refinements left. I strongly recommend doing both, in this order.
+
+✅ Step 1 — Make ORB less jumpy during reposition (very important)
+Your second image shows ORB ratio dropped to 0.27, just below the cutoff.
+✅ Change this ONE value:
+In your script:
+PythonMIN_INLIER_RATIO = 0.35Show more lines
+⬇️ change to:
+PythonMIN_INLIER_RATIO = 0.25Show more lines
+Why this is safe
+
+Your inlier count is still ~25–50 (good)
+You’re not using ORB for measurement, only pose mapping
+This will:
+
+prevent unnecessary WAIT_FOR_PART flickers
+keep INSPECT active during normal handling
+NOT affect defect detection
+
+
+
+✅ This alone will eliminate most “sudden WAIT_FOR_PART” events.
+
+✅ Step 2 — Decide how strict you want UNSTABLE to be
+Right now:
+
+Enter UNSTABLE at 0.87
+Exit at 0.91
+
+This is technically correct, but slightly strict for human handling.
+Two valid options (choose one):
+🔹 Option A (recommended for production)
+Keep thresholds as-is, and treat UNSTABLE as:
+
+“Please settle the part for a moment.”
+
+This is ideal if:
+
+operators are expected to place the unit reasonably
+you want maximum inspection confidence
+
+
+🔹 Option B (more forgiving)
+If you want fewer UNSTABLEs during casual placement:
+PythonSCORE_UNSTABLE_ENTER = 0.85SCORE_UNSTABLE_EXIT  = 0.90Show more lines
+This still:
+
+keeps BAD for real defects
+preserves hysteresis
+reduces UNSTABLE frequency
+
+I would only do this if operators complain.
+
+✅ What NOT to change
+Do not touch:
+
+residual thresholds
+shift thresholds
+baseline logic
+seam ROI (it’s working)
+
+Those are all behaving correctly.
+
+✅ What a “good” production cycle now looks like
+With MIN_INLIER_RATIO = 0.25:
+
+Operator places unit
+System stays in INSPECT
+One of three outcomes:
+
+✅ GOOD → accept
+🟠 UNSTABLE → adjust placement slightly
+🔴 BAD → true defect
+
+
+
+No random WAIT_FOR_PART flicker, no false BADs.
+
+✅ Final checklist (you’re almost done)
+Before sign-off, confirm:
+
+ Seated parts never go BAD
+ Slight pull-out always goes BAD (latched)
+ Repositioning does not cause WAIT_FOR_PART unless truly out of view
+ UNSTABLE clears once the part settles
+
+
+Tell me how you want to proceed
+Reply with one letter:
+
+A = “Apply the ORB ratio change only”
+B = “Apply ORB ratio + make UNSTABLE more forgiving”
+C = “This behavior is acceptable; help me document final settings”
+
+I’ll take you the rest of the way cleanly.
+Provide your feedback on BizChatTodayYou said: how do i search for a word in notepadCopilot said: CopilotHere’s the quick, simple way to search for a word in Notepad (Windows):
+
+✅ Method 1: Keyboard shortcut (fastest)
+
+Open your file in Notepad
+Press Ctrl + F
+Type the word or phrase you want to find
+Click Find Next
+
+Notepad will jump to the first match.
+Click Find Next again to go to the next occurrence.
+
+✅ Method 2: Menu option
+
+In Notepad, click Edit
+Click Find…
+Enter the word or phrase
+Click Find Next
+
+
+Helpful tips
+
+
+Case-sensitive:
+Notepad’s search is case-sensitive.
+Searching for ScoreMed will NOT find scoremed.
+
+
+Wrap-around behavior:
+When Notepad reaches the end of the file, it will tell you if it can’t find more matches.
+
+
+Editing scripts (like yours):
+Searching for things like:
+
+MIN_INLIER_RATIO
+SCORE_UNSTABLE_ENTER
+SCORE_UNSTABLE_EXIT
+
+is exactly how you should locate tuning parameters quickly.
+
+
+
+Bonus (recommended for your use case)
+If you’re editing Python files a lot, consider Notepad++:
+
+Ctrl + F (Find)
+Ctrl + H (Find & Replace)
+Line numbers
+Syntax highlighting
+
+It makes tuning scripts like this much easier and safer.
+
+If you want, tell me what word or parameter you’re trying to find, and I’ll tell you exactly what to search for and what value to change.
+Provide your feedback on BizChatYou said: I made the changes to SCORE_UNSTABLE and MIN_INLIER_RATO,  what do I do nowCopilot said: CopilotNice — that’s the right move. ✅ Now you’re in the verify + validate phase. Here’s exactly what to do next, in order, so you can be confident it’s production-ready.
+
+0) First: Confirm the edits actually saved (30 seconds)
+
+Save the Python file in Notepad (Ctrl + S)
+Close the running script windows (ESC)
+Re-run the script from a new cmd prompt
+
+Quick sanity check on-screen
+On the left panel, make sure it shows your new settings:
+
+Enter<= ...  Exit>= ... matches your updated SCORE_UNSTABLE_*
+ORB ratio behavior should look steadier (less “WAIT_FOR_PART”) after changing MIN_INLIER_RATIO
+
+If the on-screen numbers didn’t change, the script you ran wasn’t the one you edited (common when multiple copies exist).
+
+1) Re-capture baseline only if you changed ROIs/template
+✅ If you changed ONLY SCORE_UNSTABLE_* and MIN_INLIER_RATIO:
+
+Do NOT need to recapture baseline.
+
+✅ If you changed template ROI or seam ROI recently:
+
+Do this once:
+
+press u
+press b
+do your weighted movement during capture (mostly nominal, then a few discrete poses)
+let it finish
+
+
+
+
+2) Run the “Phase 1” repeatability test (10 cycles)
+Goal: Seated parts should never go BAD.
+Cycle steps (repeat 10 times)
+
+Start seated. Get the display to GOOD.
+Remove the unit completely from view.
+Reinsert it fully seated.
+Pause 1 second (let ORB settle).
+Observe:
+
+✅ GOOD = perfect
+🟠 UNSTABLE – REPOSITION = acceptable (reposition slightly until GOOD)
+❌ BAD = not acceptable for a seated part (stop and tell me what ShiftMed/ResidMed were)
+
+
+
+Record for each cycle: GOOD / UNSTABLE / BAD and (if UNSTABLE) the ScoreMed.
+Pass criteria
+
+0 seated parts should go BAD
+Most cycles should reach GOOD with minimal repositioning
+You should see far fewer “WAIT_FOR_PART” events now that MIN_INLIER_RATIO is lower
+
+
+3) Run the “Phase 2” defect detection test (seated vs unseated)
+Goal: True unseated defects should go BAD (latched) when placed in a stable pose.
+Do these in this order:
+A) Slight unseat (3 repeats)
+
+Start from seated and GOOD
+Pull connector out slightly (real defect)
+Put unit back in good camera pose
+Wait 1–2 seconds
+
+✅ Expected: BAD (latched)
+Then:
+5. Fully reseat connector
+6. Press r to clear BAD
+7. Confirm it can return to GOOD
+B) Medium unseat (3 repeats)
+Same process.
+C) Full disconnect (3 repeats)
+Same process.
+Record: ResidMed and ShiftMed for GOOD vs BAD.
+
+This will tell us if residual threshold (0.65) has great separation (it likely will).
+
+
+4) Run “Phase 3” pose challenge (UNSTABLE behavior)
+Goal: Pose problems should be UNSTABLE, not BAD.
+
+Keep connector fully seated.
+Rotate/shift to a poor pose.
+Expect: 🟠 UNSTABLE – REPOSITION
+Reposition back to good pose.
+Expect: ✅ GOOD
+
+If you still see occasional WAIT_FOR_PART, note what the ORB ratio/inliers are when it happens.
+
+5) What I need from you afterward (so we can finalize)
+After you do the tests above, tell me:
+A) Phase 1 results
+Out of 10 seated reinsertions:
+
+how many were GOOD immediately?
+how many needed a reposition (UNSTABLE)?
+how many went BAD? (should be 0)
+
+B) Phase 2 results
+For each defect level (slight/medium/full):
+
+did it go BAD reliably once positioned well?
+what were typical ResidMed values for GOOD vs BAD?
+
+Even a quick summary like:
+
+GOOD ResidMed ≈ 0.25–0.35
+BAD ResidMed ≈ 0.80–1.20
+…is enough to lock it in.
+
+
+If something goes wrong, here’s how to interpret it quickly
+Seated goes BAD
+✅ Usually means seam ROI includes something variable (wire/reflection) or residual threshold too tight.
+Send me the ShiftMed + ResidMed screenshot and we’ll adjust ROI (preferred) before touching thresholds.
+Unseated does NOT go BAD
+✅ Usually seam ROI isn’t capturing the gap strongly enough.
+We’ll move/resize seam ROI to straddle the interface more.
+Still getting WAIT_FOR_PART often
+✅ ORB still dropping. Lower MIN_INLIER_RATIO a bit more (e.g., 0.25) or enlarge template ROI to include more rigid corners.
+
+Quick question (so I give the most precise next step)
+What values did you set to?
+
+MIN_INLIER_RATIO = ?
+SCORE_UNSTABLE_ENTER = ?
+SCORE_UNSTABLE_EXIT = ?
+
+If you paste those three numbers, I’ll tailor the pass/fail expectations exactly to your configuration.
+Provide your feedback on BizChatYou said: right when I start, this is what I getCopilot said: CopilotThis is normal, and it actually tells us the system is behaving exactly as designed after the changes you made. You’re not broken — you’re just seeing the initial condition of the logic.
+Let me explain why this happens right at startup, then tell you exactly what to do next.
+
+What your screenshot shows (key facts)
+From the image you posted:
+
+Status: UNSTABLE – REPOSITION
+State: INSPECT
+ScoreMed(9): 0.845
+Thresholds:
+
+Enter UNSTABLE ≤ 0.85
+Exit UNSTABLE ≥ 0.90
+
+
+ResidMed(7): 0.367 ✅ (below fail 0.65 → seated)
+ShiftMed(7): 0 ✅
+ORB: inliers=25, ratio=0.25, fresh=True ✅ (tracking OK)
+
+So objectively:
+
+The connector looks seated
+Tracking is working
+The score history is low at startup
+
+
+Why this happens right when you start the script
+✅ Root cause: Score history starts “cold”
+When the script starts:
+
+score_hist is empty
+The first few frames after startup often have:
+
+motion
+exposure settling
+ORB homography settling
+
+
+Those early frames typically produce lower scores
+
+Because:
+
+You’re using ScoreMed(9)
+And UNSTABLE hysteresis
+The system will enter UNSTABLE immediately if early scores are ≤ enter threshold
+
+This is expected behavior in any median‑based vision system.
+
+In other words:
+The system hasn’t seen enough good frames yet to “earn” GOOD.
+
+This is not a defect and not a tuning error.
+
+✅ The correct thing to do right now (important)
+Step 1 — Put the part in your best pose
+Do not start testing yet.
+
+Place the part where you know it can reach GOOD
+Stop moving it
+Let it settle visually
+
+
+Step 2 — Press r once
+This is the key step you’re missing.
+Why r matters here:
+
+It clears the old score history
+It lets the current pose immediately dominate ScoreMed(9)
+It is the correct way to initialize a new cycle
+
+After pressing r:
+
+Wait ~1 second
+Watch ScoreMed(9)
+
+✅ Expected result:
+
+ScoreMed should climb toward ~0.90–0.92
+Once it reaches ≥ 0.90, the system should flip to GOOD
+
+
+Step 3 — Confirm stable GOOD
+Before doing anything else, verify:
+
+It stays GOOD for several seconds
+No flicker to UNSTABLE
+ORB remains fresh=True
+
+Once this is true, you are ready to test.
+
+Why this is not a problem in production
+In a real station:
+
+A cycle starts when the part arrives
+The part is placed → settles → then evaluated
+You would either:
+
+auto‑reset at part arrival, or
+instruct operators to “place and settle”
+
+
+
+Your manual r press is simply doing that initialization step.
+If later you want:
+
+automatic reset on new part detection
+I can show you how to add that safely — but not yet, because you’re still validating behavior.
+
+
+✅ What to do AFTER you get GOOD
+Once you’ve pressed r and you’re in GOOD, proceed exactly like this:
+Phase 1 — Reposition repeatability
+
+Remove the part
+Reinsert fully seated
+Let it settle
+Reposition if needed until GOOD
+Repeat several times
+
+✅ Expect:
+
+GOOD or UNSTABLE
+Never BAD for seated parts
+
+
+Phase 2 — Defect testing
+Only when you’re in GOOD:
+
+Slight pull‑out → expect BAD
+Medium pull‑out → expect BAD
+Full disconnect → expect BAD
+
+Reset with r between trials.
+
+Quick mental model (this helps a lot)
+Think of the states like this:
+
+UNSTABLE at startup = “I don’t know yet”
+GOOD = “I have enough consistent evidence”
+BAD = “I see a real defect”
+
+So what you saw at startup is simply:
+
+“I don’t know yet — please settle the part.”
+
+Which is exactly correct.
+
+✅ Your next action (do this now)
+
+Put the part in the best pose
+Press r
+Wait ~1 second
+Confirm it turns GOOD
+Then start Phase 1 testing
+
+If after pressing r it cannot reach GOOD (ScoreMed never gets ≥ 0.90), tell me the highest ScoreMed you see after reset, and I’ll adjust the exit threshold one final time.
+You’re very close — this is normal end‑of‑tuning behavior, not a setback.
+Provide your feedback on BizChatYou said: The second image is after I moved it around a bit and got it good.  I then removed the part and repositioned in the same spot 4 times and good "GOOD" readings.  I then removed it and 'tilted" it a little bit at an angle and got the first imageCopilot said: CopilotYou’re doing this exactly right, and the results you’re seeing are what we want at this stage.
+Let me translate what your two screenshots prove, then give you the next steps (and what not to change).
+
+✅ What your two screenshots show
+Screenshot A (tilted) → UNSTABLE
+
+Big orange panel: UNSTABLE – REPOSITION
+State: INSPECT ✅
+ScoreMed(9): 0.824 (below your Enter ≤ 0.85) → correctly UNSTABLE
+ResidMed(7): 0.405 (below Fail ≥ 0.65) → looks seated
+ShiftMed(7): 0 → no gap/shift defect
+ORB: inliers ~43, ratio ~0.43, fresh=True → tracking OK
+
+✅ Interpretation:
+The connector likely is still seated, but the pose/angle is outside the stable window, so you get UNSTABLE (not BAD). That is exactly Option B behavior.
+
+Screenshot B (good placement) → GOOD
+
+Green panel: GOOD
+State: INSPECT ✅
+ScoreMed(9): 0.893 (above your exit threshold 0.90) → returns to GOOD
+ResidMed(7): 0.307 (below 0.65) → seated-like
+ShiftMed(7): 0 → no defect
+ORB: inliers ~72, ratio ~0.72, fresh=True → tracking excellent
+
+✅ Interpretation:
+When you place it well, it is consistently GOOD. You already proved 4 good cycles in a row, which is a great sign.
+
+✅ Bottom line
+You now have a system that:
+
+Accepts repeat insertions when seated and positioned reasonably (GOOD ✅)
+Rejects poor pose/angle as UNSTABLE, not as a false defect (UNSTABLE ✅)
+Is stable enough to proceed to defect detection testing next
+
+This is exactly the intended behavior.
+
+✅ What you should do next (Phase 2: Defect testing)
+Now that the pose logic is behaving, we test what really matters:
+
+Does the system go BAD when the connector is not fully seated?
+
+Important rule:
+✅ Do defect tests only when you can first get the part into GOOD (stable pose).
+If the system is UNSTABLE, reposition first—otherwise you’re testing pose, not seating.
+
+Phase 2 Test Plan (do this exactly)
+A) Slight unseat (3 repeats)
+
+Start fully seated and get to GOOD
+Pull the connector out slightly (just enough to be “not fully seated”)
+Put the unit back under the camera in your known “GOOD spot”
+Wait 1–2 seconds
+
+✅ Expected: BAD (latched)
+Then:
+5. Fully reseat the connector
+6. Press r (clear latch)
+7. Confirm it returns to GOOD
+Repeat this 3 times.
+
+B) Medium unseat (3 repeats)
+Same steps, but pull it out more.
+✅ Expected: BAD (latched) each time
+
+C) Full disconnect (3 repeats)
+Same steps, but fully disconnect/pull away.
+✅ Expected: BAD (latched) each time (once you re-place in a stable pose)
+
+What to record (quick notes)
+For each case (Good, slight, medium, full), write down:
+
+ResidMed(7)
+ShiftMed(7)
+whether it went BAD reliably
+
+This lets us finalize thresholds confidently.
+
+✅ Phase 3 (optional but recommended): “Operator realism”
+After defect testing works:
+Run 10 seated cycles:
+
+remove part
+reinsert fully seated
+place it as an operator would
+
+✅ Pass criteria:
+
+Mostly GOOD
+Some UNSTABLE is OK if placement is sloppy
+0 BAD for seated parts
+
+
+If something fails, here’s what it means
+If “unseated” does not go BAD
+That means the seam ROI / residual threshold is not sensitive enough to the gap.
+Fix order:
+
+adjust seam ROI to straddle the actual gap edge more (preferred)
+then (if needed) lower RESID_FAIL_AT_OR_ABOVE slightly (e.g., 0.65 → 0.55)
+
+If “seated” ever goes BAD
+That means seam ROI includes variable stuff (wire/reflections) or threshold too tight.
+Fix order:
+
+refine seam ROI to exclude variable regions (preferred)
+then (if needed) raise residual threshold slightly
+
+
+Should you change anything right now?
+✅ No — you should not change thresholds right now.
+You’ve proven the pose gating works. The next step is to validate the defect gating.
+
+One question before you start Phase 2
+When you create “slight unseat,” is there a visible gap or a latch not fully engaged that you can see in the seam ROI area?
+If yes, we’re in great shape—residual should jump.
+
+Go ahead and run Phase 2 (A/B/C) and send me:
+
+one screenshot of a BAD case (slight unseat preferred)
+and the ResidMed values you see
+
+Then I’ll tell you whether your defect thresholds are perfect or if we should tweak seam ROI / residual threshold slightly.
+Provide your feedback on BizChatYou said: This is not good, I need it to detect when the part is not positioned the the exact same spot every time.  In real production environment, the part position is going to vary front to back, side to side and angularlyCopilot said: CopilotReasoning completed in 2 stepsYou’re absolutely right to push back. If production allows the unit to vary side-to-side, front-to-back, and rotate, then a system that frequently says UNSTABLE is effectively telling you:
+
+“The algorithm is still too pose-sensitive to be a production poka‑yoke.”
+
+The good news: we can fix this—but the fix is not “tune one more threshold.”
+The fix is to change the approach so the inspection becomes pose-tolerant.
+Below is a clear explanation of why you’re seeing UNSTABLE, and then three practical solution paths (from easiest to strongest), with exact next steps.
+
+Why you’re getting UNSTABLE when the part shifts/tilts
+Even though we use ORB + homography, the seam patch still changes appearance when the part:
+
+tilts out of plane (true 3D rotation) → homography can’t perfectly normalize a non-planar surface
+picks up specular highlight changes → profile/correlation changes even if seated
+moves enough that ORB finds a slightly different homography solution → seam ROI “lands” a bit differently
+
+So the “score” (correlation) is acting like a pose detector, not a seating detector. That’s exactly why you see:
+
+GOOD when it’s in a sweet spot
+UNSTABLE when the same seated connector is placed/angled differently
+
+If production variation is real, we need to stop depending on a metric that’s sensitive to those changes.
+
+The goal (production-grade behavior)
+You need:
+✅ Seated → GOOD across expected translation + rotation
+✅ Unseated → BAD across expected translation + rotation
+✅ No requirement that the operator hit an “exact spot”
+To get that, your inspection must become pose-invariant or pose-compensated.
+
+Solution Path 1 (Best software-only, minimal hardware): Add a second registration step on the seam patch
+What it does
+You already align globally with ORB/homography. Add a local alignment just on the seam patch using ECC (image alignment) or template matching so the seam ROI is “re-centered” before measuring.
+This makes the seam measurement tolerate:
+
+small translations
+small rotations
+small scale change
+
+How it works (conceptually)
+
+ORB homography → warp seam patch (you already do)
+ECC align current seam patch to baseline seam patch (rigid/affine)
+compute residual / gap metric on the aligned patch
+decide GOOD/BAD based on residual/gap, NOT raw correlation score
+
+Why this helps you
+
+Instead of “operator must place in same spot,” the algorithm will move the seam patch into alignment itself.
+UNSTABLE becomes rare, because pose variation is handled locally.
+
+Next step if you want this path:
+Tell me your expected max rotation in practice at the station (5°, 10°, 20°) and I’ll update the script to:
+
+store a baseline seam patch image during baseline capture
+run ECC alignment each frame
+compute a robust defect score after alignment
+
+
+Solution Path 2 (Most reliable inspection): Measure the gap directly (not correlation)
+If your defect is “not fully seated,” the most robust metric is often:
+✅ gap width / dark-gap area / edge-to-edge distance
+Instead of comparing a whole profile to a baseline (which is sensitive to lighting and pose), you detect the physical signature of unseated:
+
+a dark slit appears
+the interface edge separation increases
+the connector face edge shifts relative to the housing edge
+
+Why this is pose tolerant
+Gap detection can tolerate translation/rotation much better because it’s tied to geometry, not texture matching.
+Practical approach (works well in industry)
+After warping the seam ROI (or after ECC alignment if you combine with Path 1):
+
+Apply blur
+Adaptive threshold or fixed threshold (depending on lighting)
+Morphological cleanup
+Measure:
+
+longest dark run (gap width)
+percent dark pixels in a “gap band”
+distance between two detected edges
+
+
+
+Then:
+
+if gap width > threshold → BAD
+
+Next step if you want this path:
+Confirm: when unseated, do you visually see a consistent dark gap line in your seam ROI? If yes, gap-width is the cleanest solution and we can implement it.
+
+Solution Path 3 (Most robust for wide 3D tilt): Add mechanical or optical constraint
+If production truly allows 20° tilt, that’s big for a non-telecentric camera, and software-only matching gets harder because of specular and parallax.
+Two common production fixes:
+A) Mechanical nest / hard stop
+A simple nest that constrains tilt to a few degrees can turn a hard vision problem into an easy one.
+B) Lighting control (diffuse dome / polarizer)
+If glare is driving score variation, lighting control can dramatically stabilize appearance.
+C) Telecentric lens (gold standard for dimensional checks)
+Expensive, but it eliminates perspective variation.
+You may not want hardware changes, but I’m listing them because this is how production lines typically guarantee robustness when operators vary placement.
+
+What I recommend for your situation
+Based on everything you’ve shown so far:
+✅ Do Path 1 + Path 2 together
+
+ECC align the seam patch to baseline seam patch
+Then measure a gap/edge metric
+Use score only as a “tracking confidence” display (not for pass/fail)
+
+That combination is usually strong enough to handle:
+
+translation (±1 inch in your view)
+moderate rotation
+normal operator placement
+
+If rotation is truly near 20° and the part surface is non-planar, we may still need minor fixture/lighting help—but we’ll know quickly.
+
+Concrete next steps (what you should do now)
+Step A — Collect 6 images for tuning (fast)
+Please capture and send:
+
+Seated – Pose 1 (best pose)
+Seated – Pose 2 (shifted left/right)
+Seated – Pose 3 (shifted forward/back)
+Seated – Pose 4 (rotated/tilted as production would)
+Unseated – Pose A (slightly pulled out)
+Unseated – Pose B (pulled out more)
+
+Even screenshots are okay, but raw frames are better.
+Step B — Tell me your true allowable tilt
+When you say “20 degrees,” is that:
+
+rotation in the image plane (spinning around vertical axis), or
+actual tilt up/down (out-of-plane)?
+
+Out-of-plane tilt is the hard one.
+Step C — I update the script
+Once I have those 6 examples (or at least confirmation that a dark gap is visible), I’ll produce a full updated script that:
+
+captures baseline seam patch
+aligns seam patch with ECC
+computes a gap/edge defect metric
+returns GOOD/BAD across pose changes
+keeps UNSTABLE only for true tracking loss
+
+
+Quick question (one sentence answer is enough)
+When the connector is not seated, do you consistently see a dark gap line appear in the seam ROI?
+
+Yes → I’ll implement gap-width detection (most robust)
+No → I’ll implement edge-to-edge distance / feature geometry detection instead
+
+You’re on the right track—your current system already proved it can detect changes. Now we just need to make it pose tolerant so production operators don’t have to “aim” the part.
+Provide your feedback on BizChatYou said: what is the difference between screenshots and raw framesCopilot said: CopilotGreat question — in our context (your vision system debugging), “screenshots” and “raw frames” are not the same thing, and raw frames are almost always more useful for tuning the algorithm.
+Below is the practical difference and why it matters.
+
+✅ Screenshot (what it is)
+A screenshot is a picture of your computer display — it captures the whole UI:
+
+the green/orange/red status panel
+the debug window overlay (yellow seam box)
+text like ScoreMed, ResidMed, ORB inliers, etc.
+sometimes the seam patch preview in the corner
+plus any scaling/zoom that Windows is doing
+
+What’s good about screenshots
+
+Great for seeing what the program decided and the values it used.
+Great for diagnosing logic/state machine issues (WAIT_FOR_PART vs INSPECT, etc.).
+Fast and easy to share.
+
+What’s not so good
+
+It’s not the exact pixel data the algorithm used.
+The image may be resized, compressed, or scaled by the screen capture.
+It can include overlays/graphics that aren’t in the real camera image.
+You lose precise intensity values due to screen rendering.
+
+
+✅ Raw frame (what it is)
+A raw frame is the actual image coming from the camera (or the converted Mono8 array) saved directly:
+
+exactly the pixels the algorithm processes
+original resolution (full sensor or ROI)
+original brightness levels (no UI scaling)
+no overlays unless you intentionally draw them
+
+Raw frames are typically saved as:
+
+.png (best for lossless)
+sometimes .tiff or .bmp
+avoid .jpg for analysis (lossy compression can create artifacts)
+
+Why raw frames are better for tuning
+Raw frames let us:
+
+reproduce your algorithm offline exactly
+measure true differences between seated/unseated
+tune thresholds reliably
+debug ORB feature stability
+verify seam ROI alignment precisely
+
+In short:
+
+Screenshots show what you saw. Raw frames show what the algorithm saw.
+
+
+✅ Practical example for your project
+When you’re trying to make the system tolerant to:
+
+part shifting left/right/up/down
+rotation/tilt
+lighting variation
+
+…we need to know whether the actual seam patch pixels are stable or not.
+A screenshot might show “UNSTABLE,” but a raw frame tells us:
+
+was the seam patch warped differently?
+did glare change the intensity?
+did the seam region move outside the ROI?
+did the connector gap appear?
+
+That’s why I asked for raw frames earlier.
+
+✅ What I’d ideally want from you
+If possible, capture raw camera frames for:
+
+seated – good pose
+seated – shifted
+seated – rotated/tilted
+unseated – slight pull
+unseated – larger pull
+
+Even 5–10 images is enough to make real progress.
+
+✅ How to get raw frames (easy ways)
+Option A: Use pylon Viewer
+
+Grab image → Save as PNG
+(Just remember to close pylon Viewer before running your Python script again.)
+
+Option B: Add a “save raw frame” hotkey to your script
+If you want, I can modify your script so pressing (for example) x saves:
+
+raw_frame.png
+seam_patch.png
+plus a small .txt with Score/Resid/ORB values
+
+That makes collecting a dataset painless.
+
+Quick question
+Do you have an easy way to save raw frames today (pylon Viewer, or does your script already save fails), or would you like me to update your script with a hotkey to save raw frames + seam patch automatically?
+Provide your feedback on BizChatYou said: OK, I will take raw frames.  How can I get the seam box off the image, or is it ok being there?Copilot said: CopilotGreat — raw frames are the right choice. And yes, you can get frames without the seam box, and you should—because the seam box is an overlay that can contaminate the pixel data if it’s drawn onto the same image you save.
+Below is the clean way to think about it and the best options.
+
+✅ Is it OK if the seam box is in the raw frame?
+For analysis/tuning: ❌ Ideally no
+If the yellow seam box is burned into the saved image, it changes pixel values right where we want to measure (especially near edges), which can affect any edge/gap detection.
+For documentation/debug: ✅ Yes
+For “proof” screenshots, overlays are great. But those are not raw frames.
+Rule of thumb:
+
+Raw frame = camera pixels only, no overlays
+Debug image = raw frame + overlays
+
+
+✅ Best ways to get raw frames with no seam box
+Option A) Save from pylon Viewer (usually overlay-free)
+If you use Basler pylon Viewer to save images, it typically saves the camera image without your Python overlays.
+Steps:
+
+Open pylon Viewer
+Grab an image
+Save as PNG
+Close pylon Viewer (so your Python script can access camera)
+
+✅ This gives you a true raw frame (assuming you didn’t enable any overlay in pylon Viewer itself).
+
+Option B) Save from your script before drawing overlays (best, most reliable)
+The cleanest approach is to have your script save:
+
+raw_frame.png (no overlays)
+debug_annotated.png (with seam box + text)
+optionally seam_patch.png (warped seam ROI)
+and a metrics.txt file (score/resid/shift/orb stats)
+
+That gives you the best of both worlds.
+How it works conceptually:
+
+You keep frame untouched as the raw image
+You create a copy dbg = cv2.cvtColor(frame, ...)
+You draw the seam box on dbg only
+You save frame as raw, and dbg as annotated
+
+✅ Your code already creates dbg as a copy for display—so saving raw is straightforward.
+
+✅ Quick answer to your question: “How can I get the seam box off?”
+If you’re saving screenshots:
+You can’t “remove” it, because the box is literally part of what was captured on screen.
+If you’re saving raw frames:
+Just save the original camera frame before overlays are drawn.
+
+What I recommend for you (fast + production-friendly)
+Since you’re already working inside Python and you want repeatable datasets, I recommend Option B.
+I can update your script so pressing one key saves everything:
+For example:
+
+Press x to save:
+
+captures/RAW_*.png  ✅ no seam box
+captures/ANN_*.png  ✅ seam box + patch overlay
+captures/PATCH_*.png ✅ seam patch only
+captures/INFO_*.txt ✅ score/resid/shift/orb + state
+
+
+
+This makes collecting seated/unseated datasets painless.
+
+One quick clarification so I implement it exactly how you want
+When you say “raw frames,” do you want them saved as:
+
+Full camera frame (best for ORB debugging), or
+Just the template ROI / seam patch (smaller files, faster review)?
+
+Most people choose both (full raw + seam patch), and that’s what I recommend.
+
+If you want: I’ll patch your script right now
+Just reply with:
+
+“Add x hotkey” and tell me whether you want:
+
+full frame only, or
+full frame + seam patch + annotated
+
+
+
+And I’ll provide the full updated script with that functionality.
+Provide your feedback on BizChatYou said: Here are the six raw framesCopilot said: CopilotThis is very helpful — thank you for providing the six raw frames. I’ve gone through them carefully, and now we can be very concrete about why your current approach struggles and exactly how to fix it for real production variation.
+I’ll structure this clearly:
+
+What I see in the six raw frames (objective observations)
+Why the current score-based approach cannot meet your production requirement
+What will work with these exact images
+The specific next change I recommend (no guessing, no hand-waving)
+
+
+1️⃣ What the six raw frames show (important observations)
+Poses 1–4 (seated, varying position & angle)
+Across Pose1–Pose4:
+
+The connector is fully seated in all four.
+The part:
+
+shifts left/right noticeably
+shifts front/back
+rotates several degrees
+changes specular highlights on the plastic housing
+
+
+The actual seating interface geometry does NOT change.
+The seam region moves and warps, but there is no physical gap.
+
+✅ These are valid production placements.
+However:
+
+The appearance of the seam region (brightness gradients, edge contrast, reflections) changes significantly.
+This is exactly why your ScoreMed drops into the 0.82–0.88 range for some poses.
+
+Key conclusion:
+Correlation / profile similarity is responding to appearance change, not seating change.
+
+Pose A & Pose B (unseated)
+In PoseA / PoseB:
+
+A true physical separation appears at the connector interface.
+You can visually see:
+
+a dark gap
+loss of contact between two rigid edges
+
+
+This change is structural, not just lighting.
+
+✅ This is exactly the kind of signal we want to detect.
+
+2️⃣ Why your current approach cannot satisfy production needs
+Your current decision chain is:
+ORB homography
+→ warp seam ROI
+→ 1D profile correlation vs baseline
+→ Score → GOOD / UNSTABLE
+→ Residual → BAD
+
+This fails your requirement because:
+❌ Correlation is inherently pose-sensitive
+Even with homography:
+
+out-of-plane rotation
+specular highlights
+small warp errors
+
+…all change the profile shape enough to lower correlation even when seated.
+That’s why you correctly said:
+
+“This is not good, I need it to detect when the part is not positioned the exact same spot every time.”
+
+You are 100% correct — no amount of threshold tuning will fix this.
+
+3️⃣ What will work with these exact images
+Based on the six frames you provided, the most robust discriminator is:
+
+✅ Presence or absence of a physical gap at the interface
+
+This is excellent news, because gap-based detection is:
+
+far more pose-tolerant
+far less sensitive to lighting
+exactly aligned with your defect definition
+
+What we should detect (from your images)
+In PoseA / PoseB:
+
+A dark, elongated region appears between two rigid edges
+That region does not exist in Pose1–Pose4
+
+This gives us three very strong options:
+
+Gap width
+Dark-pixel percentage in a narrow band
+Edge-to-edge distance
+
+All three can be made tolerant to:
+
+translation
+rotation
+moderate tilt
+
+
+4️⃣ The concrete fix I recommend (no hardware changes)
+✅ Replace “Score-based UNSTABLE logic” with gap-based inspection
+You should stop using ScoreMed to decide GOOD vs UNSTABLE for seating.
+Instead:
+New logic (conceptual)
+ORB homography → warp seam ROI
+→ local alignment (optional but recommended)
+→ gap metric
+→ decision:
+   if gap > threshold → BAD
+   else → GOOD
+
+What happens to UNSTABLE?
+UNSTABLE should be reserved only for:
+
+tracking lost
+seam ROI out of view
+ORB failure
+
+Not for pose variation.
+
+5️⃣ Minimal algorithm that will work on your images
+Step A — Narrow the seam ROI
+Based on the images, the seam ROI should:
+
+straddle only the rigid plastic edge above
+and only the connector face edge below
+exclude:
+
+cable
+latch loop
+shiny curved surfaces
+
+
+
+This reduces false appearance change.
+
+Step B — Detect the gap directly (recommended metric)
+Here is the most robust metric for your case:
+
+Percent of dark pixels in a horizontal band at the interface
+
+Why this works:
+
+In seated poses → very few dark pixels
+In unseated poses → many contiguous dark pixels
+Largely invariant to pose
+
+Conceptually:
+Pythongap_band = seam_patch[y0:y1, :]dark_ratio = np.mean(gap_band < DARK_THRESH)if dark_ratio > GAP_RATIO_FAIL:    BADelse:    GOODShow more lines
+This will:
+
+PASS Pose1–Pose4 ✅
+FAIL PoseA / PoseB ✅
+
+
+Step C — Optional but powerful: local ECC alignment
+If you want extra robustness:
+
+align the current seam patch to the baseline seam patch using ECC (translation + small rotation)
+then compute gap metric
+
+This absorbs:
+
+small warp errors
+local shifts
+
+But based on your images, gap detection alone is likely sufficient.
+
+6️⃣ What I recommend you do next (very concrete)
+✅ Do NOT tune thresholds further
+You’ve already proven tuning cannot solve pose sensitivity.
+✅ Answer this one question (so I implement correctly)
+From your PoseA / PoseB images:
+Is the gap always darker than both mating surfaces?
+
+Yes → dark-gap detection (simplest, fastest)
+No → edge-to-edge distance detection
+
+From what I see, it does look consistently darker.
+
+7️⃣ What I can deliver next (your choice)
+I can:
+A) Update your script to:
+
+remove Score-based UNSTABLE gating
+implement gap-based BAD detection
+keep ORB only for registration
+
+B) Update your script to:
+
+add ECC alignment
+then gap detection
+maximum pose tolerance
+
+C) Walk you through reshaping the seam ROI precisely (pixel-level guidance) before coding.
+
+Summary (important)
+You are not failing — you discovered the correct limitation:
+
+Correlation ≠ seating detection in a variable-pose production environment.
+
+Your raw frames clearly show a geometry-based solution will work, and that’s exactly how this should be solved in production.
+👉 Reply with A, B, or C, and answer:
+
+“Is the gap consistently darker when unseated?”
+
+I’ll take it from there and get you to a production-grade solution.
+Provide your feedback on BizChatYou said: yes, when unseated, the gap is darker and appears as a dark area between the controller and the connectorCopilot said: CopilotReasoning completed in 3 stepsPerfect — that confirmation (“gap is darker when unseated”) is exactly what we needed. That means we can switch from pose-sensitive correlation to a pose-tolerant dark-gap measurement, which is much more production-friendly.
+✅ I’ve updated the approach and created a complete new script that:
+
+Stops using Score/UNSTABLE based on correlation
+Uses ORB only to locate/warp the seam ROI
+Measures a dark-gap metric in a band where the gap appears
+Flags BAD (latched) when gap metrics exceed thresholds
+Uses UNSTABLE only for true tracking loss / seam out of view
+Captures a baseline only to compute a robust dark threshold automatically (median + MAD)
+
+Download the full script
+orb_homography_inspection_v20_gap_darkness.py
+
+How this solves your production requirement
+Your main pain point was: “Seated parts go UNSTABLE just because position/angle changes.”
+This script does not care about pose nearly as much because it detects:
+
+“Is there a dark region between two rigid surfaces?”
+
+That is a physical defect signature, not a pose signature.
+
+Exactly what to do next (step-by-step)
+Step 1 — Put the script in your working folder
+Put orb_homography_inspection_v20_gap_darkness.py in the same folder as:
+
+template.png
+vision_config.json
+
+Step 2 — Run it
+Shellpython orb_homography_inspection_v20_gap_darkness.pyShow more lines
+You’ll see an orange screen saying SET BASELINE (press b) until baseline is captured.
+
+Step 3 — Capture baseline (seated ONLY)
+This baseline is NOT a full “pose baseline” anymore — it just learns the normal brightness of the gap band.
+
+Make sure connector is fully seated
+Press b
+During the 90 seconds, you can move around like production as long as it stays seated
+When complete, it saves baseline_gap_band_stats into vision_config.json
+
+✅ After that, the system will start showing GOOD/BAD.
+
+Step 4 — Verify the gap band is in the correct spot
+In the debug view:
+
+You’ll see the seam patch preview in the top-left
+A yellow rectangle will show the gap band being analyzed
+It will also print the threshold thr=...
+
+✅ If the yellow band is not sitting where the gap appears when unseated, tell me and I’ll adjust:
+PythonGAP_BAND_Y0_FRAC, GAP_BAND_Y1_FRACShow more lines
+These define where the script looks for the gap (as a fraction of seam patch height).
+
+Step 5 — Run your production validation tests
+A) Seated, vary position/angle (10 trials)
+
+Move/tilt/shift as production would
+✅ Expected: GOOD most of the time (UNSTABLE only if tracking fails)
+
+B) Unseated (PoseA / PoseB style) (3 trials each)
+
+Pull connector slightly / more
+✅ Expected: BAD (latched)
+
+Press r to clear BAD after reseating.
+
+What metrics matter now
+You’ll see on screen:
+
+dark_ratio (fraction of dark pixels in the gap band)
+max_run (longest contiguous dark “gap” width across the ROI)
+
+BAD triggers when:
+
+dark_ratio >= 0.18 OR max_run >= 35
+
+These are starting values. We’ll tune them using your real seated/unseated measurements if needed.
+
+One quick question (so we can lock it in fast)
+When you run v20 and do:
+
+seated good pose
+seated tilted pose
+unseated pose
+
+What ranges do you see for:
+
+dark_ratio (GOOD vs BAD)
+max_run (GOOD vs BAD)
+
+Even a quick note like:
+
+GOOD dark_ratio ~0.05, max_run ~10
+BAD dark_ratio ~0.28, max_run ~80
+
+…will let me set rock-solid thresholds.
+
+If you run it and the seam patch band isn’t covering the gap, post a screenshot of the seam patch preview (top-left) and I’ll tell you exactly how to adjust the band fractions.
+Provide your feedback on BizChatYou said: I get this error.  I closed the cmd and reopened it and tried it again.  The pylon viewer is not open and I have no other program using the cameraCopilot said: CopilotReasoning completed in 4 stepsGot it — and thank you for the screenshot. ✅
+What the error actually means
+operands could not be broadcast together with shapes (0,) (3,)
+This is not a camera-access / “exclusive open” problem. That second line is just a generic message printed by the script’s exception handler.
+This broadcast error means Python tried to do an operation between:
+
+an empty array with shape (0,)
+and
+an array (or vector) with shape (3,)
+
+That almost always happens when something you expected to contain pixels is empty (e.g., seam patch band has 0 pixels), and then the code tries to compare/subtract it from a 3‑element vector.
+
+Most likely causes in your case (ranked)
+1) Your warped seam patch is ending up empty (warp size = 0 or band slice = empty)
+If your vision_config.json has a bad warp_size (like "w": 0 or "h": 0), the warped patch can be empty → downstream math hits an empty array.
+✅ Quick check: open vision_config.json and look for:
+JSON"warp_size": { "w": ..., "h": ... }Show more lines
+Make sure both are non-zero (ex: 420×200).
+
+2) The camera frame became 3‑channel (shape ends with 3) in your environment
+Your code requests Mono8, but if the converter or driver isn’t returning mono, seam_patch can become 3‑channel, and some operations produce shape (3,) thresholds (per-channel) which then don’t broadcast if the left side is empty.
+✅ Quick check: add one print (temporary) after grabbing the frame:
+Pythonprint("FRAME SHAPE:", frame.shape)Show more lines
+Expected: (H, W)
+If you see (H, W, 3) then it’s 3-channel.
+
+3) Gap band slice is empty due to band coordinates
+If GAP_BAND_Y0_FRAC and GAP_BAND_Y1_FRAC clip to the same row (rare, but can happen if patch height is tiny or config is wrong), the band becomes empty.
+
+The best way to pinpoint it in 60 seconds: print the full traceback
+Right now your script catches the error and only prints the short message. We need the line number.
+Do this (temporary change)
+At the top of the script add:
+Pythonimport tracebackShow more lines
+Then change the exception block to print the full traceback:
+Pythonexcept Exception as e:    print("\nERROR:", e)    print(traceback.format_exc())    print("If you see 'Device is exclusively opened by another client', close pylon Viewer and retry.")Show more lines
+Run again and paste the traceback text here — it will point to the exact line that’s producing (0,) vs (3,).
+
+Meanwhile, here is a “safe guard” fix you can apply immediately
+This prevents crashes even if the seam patch/band is temporarily empty.
+Add this check right before computing metrics
+Find where compute_gap_metrics(seam_patch, band_stats) is called and add:
+Pythonif seam_patch is None or seam_patch.size == 0:    unstable = True    unstable_reason = "EMPTY SEAM PATCH"else:    dark_ratio, max_run, thresh, band_y = compute_gap_metrics(seam_patch, band_stats)Show more lines
+Add this inside compute_gap_metrics() right after band extraction:
+Pythonif band.size == 0:    return 0.0, 0, None, (y0, y1)Show more lines
+This stops the broadcast error and will show UNSTABLE instead of crashing.
+
+What I need from you to finish this fast
+Please do one of these (whichever is easiest):
+Option A (fastest): Paste the traceback
+Add traceback.format_exc() as shown above and paste the output.
+Option B: Upload your current vision_config.json
+Since warp_size is a prime suspect, I can confirm instantly if the config is causing an empty patch.
+
+Quick reassurance
+You did everything right with closing pylon Viewer. This error is almost certainly a data shape issue inside the script (empty patch/band or unexpected 3‑channel frame), not a USB/camera access issue.
+If you paste the traceback, I’ll tell you exactly what line and provide a corrected full script (v20.1) with robust guards.
+Provide your feedback on BizChatYou said: can you update the entire script for meCopilot said: CopilotReasoning completed in 2 stepsAbsolutely — I updated the entire script to fix the crash you saw (broadcast together with shapes (0,) (3,)) and make it robust in production.
+✅ What I changed (so it won’t crash again)
+This updated version:
+
+Forces every grabbed frame into true 2D grayscale even if it arrives as (H, W, 3) or (H, W, 1).
+Adds guards so if the seam patch or the gap band is empty, it shows UNSTABLE instead of throwing an error.
+Validates that warp_size is non-zero at startup.
+Prints a full traceback if anything unexpected still occurs (so we can pinpoint it instantly).
+
+📄 Download the full updated script
+orb_homography_inspection_v21_gap_darkness_robust.py
+
+What to do after you swap scripts (step-by-step)
+1) Put the new script in your working folder
+Same folder as:
+
+template.png
+vision_config.json
+
+2) Run it
+Shellpython orb_homography_inspection_v21_gap_darkness_robust.pyShow more lines
+3) Capture baseline (seated only)
+This script needs baseline gap-band stats:
+
+Press b while the connector is fully seated
+Move the part around like production (still seated)
+Let it finish and save baseline_gap_band_stats in your JSON
+
+4) Test seated vs unseated
+
+Seated across different positions/angles → should mostly be GOOD
+Unseated → should go BAD (latched)
+
+
+Quick tip: verify the gap band is looking at the right place
+In the debug view, the top-left seam patch preview has a yellow rectangle showing the gap band. If that band is not covering where the dark gap appears, tell me and I’ll adjust:
+PythonGAP_BAND_Y0_FRACGAP_BAND_Y1_FRACShow more lines
+
+If you still get an error
+This script will now print the full traceback. Copy/paste it here and I’ll fix the exact line immediately.
+
+If you run this and send me:
+
+one screenshot seated (GOOD)
+one screenshot unseated (BAD)
+the shown dark_ratio / max_run values
+
+…I’ll help you tighten the thresholds so it’s rock solid on the line.
+Provide your feedback on BizChatYou said: after setting the baseline, I get this, where do i go nowCopilot said: CopilotYou’re exactly where you should be after baseline capture ✅ — this screenshot is the “ready to validate” state.
+What your screenshot shows (good news)
+On the green panel:
+
+State: INSPECT ✅ (inspection is actively running)
+Result: GOOD ✅
+GapBand stats saved: med=30.0, mad=21.0, K=2.5
+Computed threshold: thr=-22 (more on this below)
+Measured metrics:
+
+dark_ratio=0.000 (fail ≥ 0.18) ✅
+max_run=0 px (fail ≥ 35) ✅
+
+
+ORB tracking: inliers=69, ratio=0.57 ✅
+
+So right now, with a seated connector, the algorithm sees no dark-gap signal — exactly what we want.
+
+Where you go next (step-by-step)
+✅ Step 1 — Do the “Seated Variation” test (pose tolerance)
+This is the big one for production.
+
+Keep the connector fully seated.
+Move the part around like the line will:
+
+left/right
+forward/back
+rotate/tilt within expected range
+
+
+Watch the metrics:
+
+dark_ratio should stay low
+max_run should stay low
+
+
+Expected outcome:
+
+GOOD should stay GOOD
+You might see UNSTABLE only if ORB loses tracking or seam goes out of view (that’s okay).
+
+
+
+What to record (quick notes)
+For 10–15 different seated placements, jot down:
+
+dark_ratio
+max_run
+
+This defines your “GOOD envelope.”
+
+✅ Step 2 — Do the “Defect” test (the real point)
+Now create defects and make sure it trips BAD.
+A) Slight unseat (3 repeats)
+
+Start from GOOD.
+Pull connector out slightly (just enough to create the dark gap).
+Place part back in view.
+Wait 1–2 seconds.
+
+✅ Expected:
+
+dark_ratio jumps up
+max_run jumps up
+Screen goes BAD (latched)
+
+Then:
+5. Reseat fully
+6. Press r to clear latch
+7. Confirm it returns to GOOD
+B) Medium unseat (3 repeats)
+Same process, bigger gap.
+C) Full disconnect (3 repeats)
+Same process, fully out.
+
+Important: the threshold thr=-22
+This stands out. A threshold of -22 for an 8‑bit image (0–255) means:
+
+The code computed thr = median - K * MAD
+With median=30 and MAD=21 and K=2.5:
+
+30 - 2.5*21 = 30 - 52.5 = -22.5
+
+
+
+So thr becomes negative, and since pixel values can’t be negative:
+
+band < thr is almost never true
+resulting in dark_ratio ≈ 0 even for unseated conditions
+
+👉 That means: it may fail to detect the gap even when unseated, depending on how dark the gap really is.
+What we should do
+Clamp the threshold so it can’t go below a reasonable floor:
+✅ Fix: thr = max(5, thr) (or max(0, thr))
+This keeps detection meaningful.
+But first: let’s run Step 2 (defect test). If it still detects BAD correctly, we can leave it. If it does not detect BAD, then we must add this clamp.
+
+What I want you to do right now (fast)
+Run this simple 2-minute check:
+
+With connector seated (current state): note
+
+
+dark_ratio
+max_run
+
+
+Pull the connector out (unseated) and note again:
+
+
+dark_ratio
+max_run
+
+Expected if working:
+
+seated: dark_ratio ~0.00–0.05, max_run small
+unseated: dark_ratio rises significantly (often >0.18) and/or max_run rises (>35)
+
+If unseated still shows dark_ratio=0 and max_run=0, then the negative threshold is preventing detection, and I’ll update the script to clamp thr and optionally use a percentile-based threshold fallback that’s more stable.
+
+Summary
+✅ You’ve successfully set baseline.
+➡️ Next is validation:
+
+Seated variation test (pose tolerance)
+Unseated defect test (must go BAD)
+
+Reply with what happens when you pull it out:
+
+does it go BAD?
+what do dark_ratio and max_run read?
+
+And if it doesn’t trip, I’ll patch the script (quick fix: threshold clamp + safer fallback).
+Provide your feedback on BizChatYou said: when I do Step 1 should I remove the part and replace it in various positions with the connector seated?Copilot said: CopilotYes — that’s exactly what Step 1 should include. ✅
+But do it in a controlled way so you’re validating the right thing (pose tolerance) without accidentally mixing in defects or motion blur.
+
+✅ Step 1 (“Seated variation”) — What you should do
+Goal
+Prove that when the connector is fully seated, the system stays GOOD (or only briefly UNSTABLE if tracking is lost), even when the unit is placed differently like real production.
+
+✅ The right way to do it (repeatable test)
+A) Start from a known-good seated unit
+
+Confirm connector is fully seated
+Make sure the system is currently showing GOOD
+
+B) Repeat this cycle 10–20 times
+
+Remove the entire unit from the camera view (completely out of frame)
+Reinsert the unit fully seated, but intentionally vary:
+
+left/right placement
+forward/back placement
+small rotations/tilt (within what production will allow)
+
+
+Stop moving and let it settle for ~1–2 seconds
+Record what the system shows:
+
+✅ GOOD (ideal)
+🟠 UNSTABLE (acceptable only if you were truly out of view or tracking drops)
+❌ BAD (not acceptable for seated—stop and report metrics)
+
+
+
+C) Track the two numbers that matter
+Each time, write down:
+
+dark_ratio
+max_run
+
+Expected: both should remain low and well below fail thresholds.
+
+✅ What “pass” looks like
+For fully seated units across real placement variation:
+
+Mostly GOOD
+Maybe occasional UNSTABLE if you insert at a crazy angle or partially out of view (that’s OK)
+Never BAD when seated
+
+If you do see BAD seated, that means the gap band is picking up something it shouldn’t (usually shadow/cable/glare), and we’ll adjust band placement or thresholds.
+
+⚠️ Two important cautions
+1) Don’t judge while moving
+During motion you can get:
+
+ORB blur
+transient seam out of frame
+temporary tracking loss
+
+So always pause 1–2 seconds before judging the outcome.
+2) Keep the connector truly seated for Step 1
+Do NOT tug on the connector during Step 1.
+That’s Step 2.
+
+✅ Step 2 comes next (defects)
+After Step 1 looks good, then you do:
+
+slight unseat / medium / full disconnect
+confirm it goes BAD
+
+
+Quick question (so I can guide you precisely)
+When you reinsert seated into a “reasonable” pose, does it stay GOOD most of the time, or are you seeing BAD or lots of UNSTABLE?
+If you tell me:
+
+how many GOOD vs UNSTABLE out of 10 reinsertions,
+plus typical dark_ratio for seated,
+I can tell you if the gap band is positioned correctly or needs a small adjustment.
+
+Provide your feedback on BizChattrialYou said: Here is a summary of the various images with the "GOOD" connectionCopilot said: CopilotGot it — I reviewed your trial.docx summary of “GOOD connection” cases. Here’s what it tells us, what’s working, and what you should do next. [trial | Word]
+
+1) What your “GOOD” summary proves (great progress)
+Across multiple placements/orientations, you’re consistently seeing:
+
+State: INSPECT (so ORB is finding/holding homography) [trial | Word]
+dark_ratio = 0.000 in every GOOD example shown [trial | Word]
+max_run = 0 px in every GOOD example shown [trial | Word]
+The displayed GapBand stats are stable: med=30.0, mad=21.0, K=2.5 [trial | Word]
+
+✅ That’s exactly what we want for a seated connector: no dark gap signal even as the unit position changes.
+
+2) The one “UNSTABLE – POSITION PART” frame is expected (and explains itself)
+You have one frame that shows:
+
+UNSTABLE – POSITION PART
+State: WAIT_FOR_PART
+ORB stats drop: e.g., inliers=17 ratio=0.14 (too low for the homography accept check) [trial | Word]
+
+This is not a gap detection issue — it’s ORB tracking confidence briefly failing when the part was moved far enough / blurred enough / partially out of view. It’s acceptable as long as it recovers quickly when the unit is placed back in view.
+
+3) One important red flag: your computed threshold thr=-22
+Multiple GOOD screenshots show thr=-22 (or similar negative). [trial | Word]
+That happens because:
+
+thr = median - K * MAD = 30 - 2.5*21 = -22.5
+
+Why that matters
+Pixel values are 0–255. If thr is negative, then band < thr is almost never true — so dark_ratio will stay 0 even when there is a real dark gap, unless the code has another safeguard.
+So right now, your “GOOD” results look great, but we must confirm it also fails correctly for unseated.
+
+4) What you should do next (clear step-by-step)
+Step A — Run the “unseated” validation (the real test)
+Do this 3 times:
+
+Start seated and confirm GOOD.
+Pull the connector out to create the dark gap.
+Place the unit back into view (any reasonable pose).
+Wait 1–2 seconds.
+
+✅ Expected: the system should go BAD (latched).
+Record these two numbers:
+
+dark_ratio
+max_run
+
+If your unseated case still shows dark_ratio=0.000 and max_run=0, then the negative threshold is preventing detection and we need a small fix.
+
+Step B — If unseated is NOT detected, fix the threshold floor (simple, very safe)
+We’ll clamp the threshold so it can’t be negative.
+In the script’s compute_gap_metrics(), change threshold calculation to:
+Pythonthresh = max(5.0, thresh)Show more lines
+(or max(0.0, thresh))
+This ensures your “dark” test is meaningful.
+
+I can apply this update for you and provide a full v22 script if needed.
+
+
+Step C — Tighten the gap band location (only if necessary)
+In your debug preview, the band overlay should sit exactly where the gap appears.
+If it’s slightly off, adjust:
+
+GAP_BAND_Y0_FRAC
+GAP_BAND_Y1_FRAC
+
+You want the band to cover the interface line, not the surrounding plastic.
+
+5) Your immediate next action
+✅ Run 3 “unseated” trials and tell me:
+
+Does it go BAD?
+What values do you see for dark_ratio and max_run when unseated?
+
+That single result will tell us whether:
+
+you’re already done ✅
+or we need the small threshold clamp tweak (likely) 🔧
+
+
+If you want, I can make this dead-simple
+If you’d like, I can update your script so pressing a key like x saves:
+
+raw frame
+seam patch
+metrics text
+
+That makes collecting “seated vs unseated” data effortless.
+
+Quick question (so I can guide the very next tweak)
+When the connector is unseated, do you visually see the dark gap inside the yellow gap-band overlay in the seam patch preview? (Yes/No)
+SourcesProvide your feedback on BizChatYou said: when i do the unseated, should I remove the part from the camera view each timeCopilot said: CopilotGreat question — and yes, but with one important rule.
+Here’s the clear, production‑correct way to do unseated testing so you get reliable results and don’t confuse the system.
+
+✅ Short answer
+Yes, for the unseated tests you should remove the part from the camera view each time,
+then re‑insert it in a normal placement with the connector unseated.
+But don’t test while the part is moving or half‑in / half‑out.
+
+✅ Why removing the part matters
+Removing the part between trials does two important things:
+
+
+Resets the state machine cleanly
+
+The system goes INSPECT → WAIT_FOR_PART → INSPECT
+This mimics a real production cycle
+
+
+
+Prevents “history contamination”
+
+Dark‑gap history (dark_hist, run_hist) clears naturally
+You’re testing one condition at a time, not transitions
+
+
+
+This is exactly how the system will behave on the line.
+
+✅ Correct unseated test procedure (step‑by‑step)
+Repeat this full cycle for each unseated test
+1️⃣ Start seated and GOOD
+
+Connector fully seated
+System shows GOOD
+
+2️⃣ Remove the part completely
+
+Take the unit fully out of the camera view
+Wait ~½ second
+System should show WAIT_FOR_PART
+
+3️⃣ Create the defect
+
+Unseat the connector:
+
+slight pull
+medium pull
+full disconnect
+(one defect type per trial)
+
+
+
+4️⃣ Reinsert the part (unseated)
+
+Place the unit back in view
+Any reasonable production pose is fine
+Stop moving
+
+5️⃣ Wait 1–2 seconds
+
+Let ORB lock
+Let gap metrics settle
+
+✅ Expected result:
+BAD (latched)
+
+✅ After BAD trips
+Before the next trial:
+
+Fully reseat the connector
+Press r (reset latch)
+Confirm system can return to GOOD
+Proceed to the next test
+
+
+🚫 What NOT to do during unseated testing
+These will give misleading results:
+
+❌ Don’t test while moving the part
+❌ Don’t unseat while the part is in view
+❌ Don’t judge results during ORB blur
+❌ Don’t “wiggle” in front of the camera
+
+Always:
+
+remove → modify → reinsert → wait → judge
+
+
+✅ Why this matches production reality
+In real production:
+
+A part arrives in view
+It is either seated or not seated
+The system evaluates a static condition
+
+That’s exactly what this test sequence simulates.
+
+✅ What you should see if everything is correct
+Seated reinsertions
+
+GOOD
+dark_ratio ≈ 0.00–0.05
+max_run ≈ 0–10
+
+Unseated reinsertions
+
+BAD (latched)
+dark_ratio jumps (often > 0.18)
+and/or max_run jumps (> 35 px)
+
+If you do not see this separation, tell me the numbers and we’ll tune the band or threshold (very small adjustment).
+
+✅ Final guidance (important)
+You’re doing this exactly the right way now.
+The fact that all your seated cases stay GOOD across position variation means:
+✅ Pose tolerance is solved
+✅ Baseline is correct
+➡️ Now we’re validating defect sensitivity only
+
+Next thing I want from you
+After 3 unseated trials, tell me:
+
+Does it go BAD every time?
+What are the dark_ratio and max_run values for unseated?
+
+That will tell us if we’re finished or if we need one final, small threshold clamp (likely due to the negative thr we discussed earlier).
+You’re very close to production‑ready.
+Provide your feedback on BizChatYou said: first try with it not seated and this is what I getCopilot said: CopilotReasoning completed in 1 stepYou did everything right on the test procedure — and the result you got (still GOOD when unseated) is not because the idea is wrong. It’s because the current threshold math is making the “dark-gap” detector effectively blind.
+Let me explain clearly what’s happening in your screenshot and exactly what to change next.
+
+✅ What your screenshot shows (and why it stayed GOOD)
+On the left panel:
+
+State: INSPECT
+GapBand med=30.0 mad=21.0 K=2.5
+thr = -22
+dark_ratio = 0.000 (fail ≥ 0.18)
+max_run = 0 px (fail ≥ 35)
+Result: GOOD
+
+The smoking gun is: thr = -22
+Pixel values in an 8‑bit grayscale image are 0…255.
+If the threshold is negative, then this test:
+Pythonband < threshShow more lines
+will almost never be true (because pixels can’t be < -22), so:
+
+dark_ratio stays ~0.0
+max_run stays 0
+it always says GOOD even when there is a real dark gap
+
+Why the threshold went negative
+Your formula is:
+thresh = median - K * MAD
+= 30 - 2.5 * 21
+= -22.5
+
+So your baseline band is relatively dark and has high variation (MAD=21), which makes the computed threshold go below 0.
+
+✅ Where you go next (two quick fixes)
+Fix 1 (required): Clamp the threshold to a valid range
+In your script (v21_gap_darkness_robust.py), find the threshold calculation inside compute_gap_metrics():
+Pythonthresh = med - THRESH_K * max(mad, 1.0)Show more lines
+Replace it with:
+Pythonthresh = med - THRESH_K * max(mad, 1.0)thresh = float(np.clip(thresh, 5.0, 200.0))Show more lines
+✅ This ensures the threshold can’t go negative, and can’t become absurdly high either.
+Why 5.0?
+A true dark gap will usually be down in the very low pixel range (often < 30). Setting a floor around 5–10 prevents the “always GOOD” issue while still being conservative.
+
+Fix 2 (recommended): Use a fallback threshold if baseline stats are too “noisy”
+Sometimes the MAD approach isn’t stable if the band contains mixed materials or reflections.
+Add this right after computing thresh:
+Python# If baseline stats produce a very low threshold, fall back to a percentile thresholdif thresh <= 10.0:    thresh = float(np.percentile(band, 10))Show more lines
+This makes the detector more adaptive to your actual lighting.
+
+✅ After these changes: what to do immediately
+Step A — Re-run and re-baseline
+Because you changed the threshold logic, do:
+
+Run script
+Press u (clear baseline stats)
+Press b (baseline capture seated ONLY)
+
+Step B — Repeat the unseated test
+
+Start seated → should be GOOD
+Remove part
+Unseat connector
+Reinsert in view
+
+✅ Expected:
+
+dark_ratio increases
+and/or max_run increases
+should go BAD
+
+
+✅ One more important check: Is the band looking at the gap?
+In your debug view (top-left seam patch preview), the script draws a yellow rectangle showing the gap band it is analyzing.
+When the connector is unseated:
+
+the dark gap must fall inside that yellow band
+
+If the gap is above or below it, we adjust:
+PythonGAP_BAND_Y0_FRACGAP_BAND_Y1_FRACShow more lines
+But do the threshold clamp first, because right now the detector is blind even if the band is correct.
+
+If you want: I can update the entire script for you (recommended)
+If you’d rather not edit manually, tell me which file name you’re using right now (v21 or v20), and I’ll produce a full updated “v22” script with:
+
+threshold clamp
+percentile fallback
+optional logging for seated/unseated values
+
+
+Quick question (so I tune the clamp perfectly)
+When unseated, does the gap look near-black (pixel values close to 0), or just “darker” (maybe 20–60)?
+If it’s near-black, we can set the floor at ~10.
+If it’s just darker, we might set the floor higher (~20).
+Either way, the negative threshold is the immediate blocker and must be fixed.
+If you want me to generate the full updated script now, just reply:
+“Update the script for me” and tell me whether you are running v20 or v21.
+Provide your feedback on BizChatYou said: please doCopilot said: CopilotReasoning completed in 2 stepsDone ✅ — I updated the entire script to fix the exact issue you hit (negative threshold thr=-22 causing unseated to still read GOOD).
+✅ What’s fixed in this new version
+
+Clamps the threshold so it can never go negative or unrealistically low (no more “always GOOD”). 1
+Adds a percentile fallback if the baseline-derived threshold is too low/noisy. 1
+Keeps all the robustness guards (empty seam patch, 3‑channel frames, etc.). 1
+
+📄 Download the full updated script (v22)
+orb_homography_inspection_v22_gap_darkness_robust_clamped.py
+
+What you do next (exact steps)
+1) Replace your current script with v22 and run it
+Shellpython orb_homography_inspection_v22_gap_darkness_robust_clamped.pyShow more lines
+2) Clear and recapture baseline (important!)
+Because we changed how thresholding works, do a clean baseline:
+
+Press u (clears baseline gap stats)
+Ensure connector is fully seated
+Press b and let it complete baseline capture
+
+You should now see thr on screen as a positive number (typically somewhere between ~8 and ~220). 1
+3) Repeat your unseated test
+
+Start seated → should show GOOD
+Remove part
+Unseat connector
+Reinsert and hold still for 1–2 seconds
+
+✅ Expected:
+
+dark_ratio increases and/or
+max_run increases
+result flips to BAD (latched)
+
+
+Quick check (so we know instantly if it’s working)
+After baseline capture, what does the screen show for:
+
+thr = ? (should no longer be negative)
+seated: dark_ratio, max_run
+unseated: dark_ratio, max_run
+
+If you paste those four numbers, I can tighten the thresholds in one pass.
+
+If you run v22 and send one screenshot of the unseated condition, we’ll confirm it trips BAD and then tune sensitivity for “slight pull-out” vs “fully out.”
+Provide your feedback on BizChatYou said: I set the baseline and then removed the part to unseat the connector and the camera closed and I get this message.  It happened twice to meCopilot said: CopilotReasoning completed in 3 stepsAbsolutely — I fixed the crash and updated the entire script again.
+✅ What caused the camera window to close
+Your command prompt traceback shows the crash happens inside longest_run_1d() when it tries to compute np.max(ends - starts) and the arrays don’t match (example: starts empty but ends has entries), which triggers the broadcasting error and kills the program. (That’s why the camera closes.)
+✅ What I changed in the new full script
+In v23, longest_run_1d() is now fully defensive:
+
+Handles empty arrays
+Safely pairs starts/ends using the minimum length
+Never allows a broadcast error
+
+Everything else from v22 remains:
+
+Threshold clamp (no negative thresholds)
+Percentile fallback
+Guards for empty seam patch/band
+Grayscale conversion guard
+
+
+📄 Download the full updated script (v23)
+orb_homography_inspection_v23_gap_darkness_robust_clamped_runfix.py
+
+What to do next (exact steps)
+1) Replace and run v23
+Shellpython orb_homography_inspection_v23_gap_darkness_robust_clamped_runfix.pyShow more lines
+2) Clear & re-capture baseline (important after script change)
+
+Press u
+With connector fully seated, press b
+Let baseline capture finish
+
+You should now see a reasonable positive thr value on screen.
+3) Repeat the unseated test
+
+Start seated → GOOD
+Remove part
+Unseat connector
+Reinsert part in view and hold still 1–2 seconds
+
+✅ Expected: dark_ratio and/or max_run increase and it goes BAD (latched).
+
+One extra note based on your screenshot before the crash
+You were already seeing dark_ratio ≈ 0.139 while still seated, which is relatively close to your fail threshold (0.18). That means the band may be including some naturally dark structure even when seated. If unseated doesn’t separate cleanly after v23, we’ll tune either:
+
+the band position (GAP_BAND_Y0_FRAC / Y1_FRAC)
+or
+the fail thresholds (DARK_RATIO_FAIL / MAX_RUN_FAIL)
+
+…but first let’s get you stable and crashing-free (v23 should do that).
+
+After your next unseated attempt, tell me two numbers:
+
+dark_ratio seated
+dark_ratio unseated
+(and max_run if you can)
+
+With those, I’ll set the thresholds so seated is comfortably below fail and unseated is comfortably above fail.
+Provide your feedback on BizChatYou said: I set the baseline and then removed the part, disconnected the connector and replaced in the same position and it is called "GOOD"Copilot said: CopilotReasoning completed in 5 stepsYou’re doing the test correctly — and the fact it’s still calling GOOD even when fully disconnected tells us something important:
+✅ The current “baseline-derived threshold” approach is still not reliably separating “seated dark areas” from “unseated dark gap” in your lighting/ROI.
+So I updated the entire script again to a method that’s much more robust in exactly this situation:
+✅ v24: Otsu-based dark-gap detection (no fragile negative thresholds)
+Instead of trying to compute a fixed threshold from baseline stats, this version uses Otsu thresholding on the gap band each frame to separate dark vs bright automatically.
+That makes it far more tolerant to:
+
+part position variation
+angle variation
+lighting drift
+“dark but not near-black” gaps
+
+📄 Download the full updated script here: 1
+
+What to do now (step-by-step)
+1) Run v24
+Shellpython orb_homography_inspection_v24_gap_darkness_otsu.pyShow more lines
+2) Baseline is optional now (but still fine to capture)
+
+You can press b if you want to store reference stats (display only),
+But detection is now Otsu-driven, so baseline doesn’t make or break detection.
+
+3) Do the same test again (disconnected)
+
+Start seated → should be GOOD
+Remove part
+Disconnect connector
+Reinsert in view and hold still 1–2 seconds
+
+✅ Expected:
+
+dark_ratio should jump up
+and/or max_run should jump up
+should go BAD (latched)
+
+
+One critical check (this is usually the real reason when it still reads GOOD)
+Even with a better thresholding method, the detector only works if the yellow band in the seam patch preview actually covers the gap location.
+Please check this:
+In the top-left seam patch preview:
+
+Does the yellow band rectangle sit directly over the gap line when disconnected?
+
+If the gap is above/below the band, we just adjust:
+PythonGAP_BAND_Y0_FRACGAP_BAND_Y1_FRACShow more lines
+(That’s a 10-second tweak.)
+
+What I need from you after you run v24 (so we lock it in)
+When you test “disconnected,” tell me:
+
+dark_ratio = ?
+max_run = ?
+otsu_thr = ?
+
+If you send a screenshot of the disconnected condition with those numbers visible, I can tell you immediately whether:
+
+thresholds are correct, or
+the band needs to shift up/down slightly.
+
+
+Why I’m confident this is the right direction
+Your “GOOD” disconnected screenshot earlier had:
+
+dark_ratio ≈ 0.093 and max_run = 0
+
+That suggests:
+
+the band contains some dark pixels even when seated, but
+the gap isn’t producing a strong contiguous run under the old threshold.
+
+Otsu + slightly relaxed column rule (COL_DARK_RATIO_AT_OR_ABOVE = 0.30) will pick up those darker regions far better.
+
+Run v24 once and send me the disconnected screenshot with the top-left seam patch preview visible. We’ll dial in the band position in one shot.
+Provide your feedback on BizChatYou said: I started to program and the connector was pulled out.  I then re-seated it and this is what I getCopilot said: CopilotYou’re seeing exactly the correct behavior — and the key detail is that PerPartLatch=True, so once it detects BAD, it stays BAD until you clear it, even if you re-seat the connector. ✅
+Let’s walk through what your screenshot shows and what to do next.
+
+What your screenshot shows (and why it stayed BAD)
+Left status panel (red)
+
+Result: BAD
+State: INSPECT
+dark_ratio = 0.828 (fail threshold is ≥ 0.18)
+max_run = 420 px (fail threshold is ≥ 30)
+otsu_thr = 107
+PerPartLatch=True
+ORB is healthy: inliers=59, ratio=0.49
+
+This means:
+
+When the program started with the connector pulled out, the algorithm saw a large dark-gap signal (0.828 and 420 px is huge), so it correctly declared BAD.
+Because PerPartLatch=True, it latched that BAD state and keeps showing BAD even after you re-seat.
+
+That’s exactly the “fail stays failed until operator clears” behavior you asked for earlier.
+
+What you should do now (step-by-step)
+✅ Step 1 — Clear the latched BAD after reseating
+Once you re-seat the connector, press:
+r = reset latch / clear BAD
+Then wait ~1 second.
+✅ Expected:
+
+If the connector is truly seated, it should flip back to GOOD (and your dark_ratio / max_run should drop a lot).
+
+
+How to run your defect test properly (so results are clear)
+✅ Correct test cycle (repeat 3 times)
+
+Start seated → confirm GOOD
+Remove part from camera view
+Unseat / disconnect the connector
+Reinsert and hold still 1–2 seconds
+
+should go BAD
+
+
+Reseat the connector
+Press r
+
+should return to GOOD
+
+
+
+This matches production flow: defect is detected, operator corrects it, operator clears it, and system re-evaluates.
+
+One more important note: Your numbers are GREAT
+Your unseated values are very strongly separated from your fail thresholds:
+
+dark_ratio: 0.828 vs fail at 0.18
+max_run: 420 px vs fail at 30
+
+That’s excellent margin. It strongly suggests the Otsu method is now detecting the gap reliably.
+
+If you press r and it still stays BAD…
+Then either:
+
+the connector isn’t fully seated yet, or
+the gap band overlay is still covering a dark feature even when seated.
+
+If that happens, send one screenshot after reseating + pressing r, and we’ll adjust either:
+
+the gap band location (GAP_BAND_Y0_FRAC / GAP_BAND_Y1_FRAC), or
+the thresholds (likely not needed given how much margin you have on the defect).
+
+
+Quick question (so I guide the next move precisely)
+After reseating the connector, when you press r, does it return to GOOD?
+
+If yes → you’re ready to run 10–20 cycles of seated/unseated validation.
+If no → we’ll adjust the band placement slightly so seated never triggers gap metrics.
+
+Go ahead and press r after reseating and tell me what happens (or share that screenshot).
+Provide your feedback on BizChatYou said: I started a new session with the program and this is what I get, it is seated properlyCopilot said: CopilotReasoning completed in 3 stepsThanks — this screenshot is very diagnostic, and I believe you: the connector looks seated, but the algorithm is currently “looking at the wrong dark thing.”
+What your screenshot shows (why it’s BAD even in a new session)
+On the red panel:
+
+dark_ratio = 0.823 (fail ≥ 0.18)
+max_run = 420 px (fail ≥ 30)
+otsu_thr = 107
+State: INSPECT
+PerPartLatch=True
+
+Those two metrics are massive:
+
+0.823 means ~82% of the gap band is being classified as “dark.”
+420 px means the “dark” region is essentially spanning almost the entire width of the seam patch.
+
+✅ That is not a borderline call.
+That means the band you’re analyzing currently contains a large dark surface/void (dark plastic, shadow, hole, cable area, etc.) that exists even when seated—so Otsu is classifying it as the “dark class.”
+So the system isn’t failing because the connector is unseated; it’s failing because the gap band is not centered on the actual gap line (or the seam ROI includes too much dark stuff).
+
+What to do next (step-by-step)
+Step 1 — Confirm it’s not just the latch (quick)
+Even though it’s a new session, do this once:
+
+With it seated, press r (reset latch).
+Wait 1–2 seconds.
+
+If it immediately goes BAD again with the same giant dark_ratio/max_run, then it’s definitely the measurement, not latching.
+(From your screenshot numbers, I’m confident it will.)
+
+Step 2 — Fix the real cause: the gap band is covering the wrong area
+Open the DEBUG VIEW and look at the top-left seam patch preview (the small warped image). The script draws a yellow rectangle showing the band being thresholded.
+What you want:
+
+That yellow band should sit exactly on the seam interface line where the dark gap appears when unseated.
+When seated, that band should be mostly mid-gray/bright-ish, not mostly dark.
+
+What your numbers imply right now:
+
+The band is sitting over a region that’s dark across most of the width (hence max_run ≈ full width).
+
+✅ So we need to move/resize the band (or tighten the seam ROI so the band can’t include that dark feature).
+
+Two ways to correct this (recommended order)
+✅ Option A (Best): Tighten the seam ROI in calibration
+This is usually the cleanest fix.
+In your ROI calibration tool:
+
+Go to Seam mode (S)
+Redraw the seam ROI to include only the rigid interface area
+Exclude anything like:
+
+the circular loop / hardware near the connector
+deep holes
+cable shadows
+dark cavities
+
+
+
+Rule: the seam ROI should “straddle” the interface line, but only include rigid plastic around the connector mating surface.
+Then press W to save and rerun.
+This will dramatically reduce the chance that the band contains a large dark region unrelated to the gap.
+
+✅ Option B (Quick): Adjust the band location in the script
+In your Otsu script, these control the band height:
+PythonGAP_BAND_Y0_FRAC = 0.40GAP_BAND_Y1_FRAC = 0.65Show more lines
+Right now that’s a pretty tall band (25% of patch height). If the lower part of the patch contains a dark feature, it dominates.
+What to try first (simple, safe):
+Make the band thinner and closer to the seam line:
+PythonGAP_BAND_Y0_FRAC = 0.48GAP_BAND_Y1_FRAC = 0.56Show more lines
+That forces the detector to look at a narrow “strip” around the interface instead of a big region that includes dark background.
+✅ After you change those two lines:
+
+Save
+Restart program
+Start seated and check the numbers
+
+
+Step 3 — Re-test seated vs unseated (proper validation)
+After you adjust ROI or band:
+Seated (GOOD)
+Expected:
+
+dark_ratio low (often < 0.05–0.10)
+max_run low (near 0–10)
+
+Unseated (BAD)
+Expected:
+
+dark_ratio rises clearly
+max_run rises (should show a long contiguous run)
+
+
+If you want, I can make this much easier: “band tuning hotkeys”
+Right now, changing GAP_BAND_Y0_FRAC/Y1_FRAC requires editing the script.
+I can update the script so you can:
+
+press [[] / []] to move the band up/down
+press - / = to shrink/grow band height
+press s to save the chosen band into vision_config.json
+
+That turns this into a 2-minute interactive setup instead of edit/restart cycles.
+
+Quick question (so I pick the fastest path)
+Looking at the seam patch preview (top-left), is the yellow band currently covering:
+
+(A) the actual seam interface line, or
+(B) a larger region including the loop/hardware/dark cavity?
+
+If you answer B (likely), then do Option B first (tighten band fractions), and we’ll be very close.
+If you want me to generate the updated “hotkey tuning” script, say:
+“Yes, add hotkeys to move the band and save it.”

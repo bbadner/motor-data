@@ -1,0 +1,24 @@
+MAGNET REPORT SUMMARY
+==================================================
+
+Apr 2025
+------------------------------
+File: Magnet Checking Data（19850PCS) 20250414.pdf
+Samples: 32
+Mean: 3.534
+Min: 0.500
+Max: 3.860
+
+
+May 2025
+------------------------------
+File: Magnet checking（13,1640PCS) 20250522.pdf
+Samples: 32
+Mean: 3.479
+Min: 0.500
+Max: 3.850
+
+
+
+INCOMPLETE REPORT RECEIVED
+magnet ring-2026-01-16 57-58.pdf

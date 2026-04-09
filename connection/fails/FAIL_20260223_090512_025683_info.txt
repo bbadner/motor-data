@@ -1,0 +1,1 @@
+baseline=308, boundary_med=415, gap=107, max_gap_stable=0, stable_count=0, orb={'matches': 100, 'inliers': 99, 'inlier_ratio': 0.99}

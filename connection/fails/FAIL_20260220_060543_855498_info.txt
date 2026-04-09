@@ -1,0 +1,1 @@
+baseline=32, boundary_med=55, gap=23, match=0.780

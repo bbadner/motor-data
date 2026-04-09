@@ -1,0 +1,199 @@
+[2025-12-15 04:21:44] === Rexair Analysis Agent Launched ===
+[2025-12-15 04:21:47] Starting function: run_motor_analysis
+[2025-12-15 04:21:47] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 04:21:48] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:49] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:50] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:51] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:52] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:52] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:53] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:54] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:55] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:55] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:56] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:56] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:57] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:58] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:21:59] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:00] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:00] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:01] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:02] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:03] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:03] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:04] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:05] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:22:05] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 04:22:05] Starting function: run_magnet_analysis
+[2025-12-15 04:22:05] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 04:22:05] [Magnet] Magnet Checking Data（19850PCS) 20250414.pdf: mean=3.688, std=0.087, Cp=1.922, CpK=1.876, values=63
+[2025-12-15 04:22:05] [Magnet] Magnet checking（13,1640PCS) 20250522.pdf: mean=3.659, std=0.093, Cp=1.800, CpK=1.653, values=63
+[2025-12-15 04:22:05] [INFO] ✅ Magnet report created: Magnet Reports\Rexair_Magnet_Timing_CpK_Report_2025-12.pdf
+[2025-12-15 04:22:05] All selected analyses complete.
+[2025-12-15 04:54:12] === Rexair Analysis Agent Launched ===
+[2025-12-15 04:54:15] Starting function: run_motor_analysis
+[2025-12-15 04:54:15] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 04:54:16] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:17] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:18] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:19] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:19] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:20] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:21] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:22] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:22] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:23] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:23] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:24] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:25] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:26] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:27] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:27] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:28] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:29] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:30] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:30] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:31] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:32] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:33] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 04:54:33] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 04:54:33] Starting function: run_magnet_analysis
+[2025-12-15 04:54:33] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 04:54:33] [Magnet] Magnet Checking Data（19850PCS) 20250414.pdf: mean=3.688, std=0.087, Cp=1.922, CpK=1.876, values=63
+[2025-12-15 04:54:33] [Magnet] Magnet checking（13,1640PCS) 20250522.pdf: mean=3.659, std=0.093, Cp=1.800, CpK=1.653, values=63
+[2025-12-15 04:54:33] [INFO] ✅ Magnet report created: Magnet Reports\Rexair_Magnet_Timing_CpK_Report_2025-12.pdf
+[2025-12-15 04:54:33] All selected analyses complete.
+[2025-12-15 05:31:24] === Rexair Analysis Agent Launched ===
+[2025-12-15 05:31:27] Starting function: run_motor_analysis
+[2025-12-15 05:31:27] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 05:31:28] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:29] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:29] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:30] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:31] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:32] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:32] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:33] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:34] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:34] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:35] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:36] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:37] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:37] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:39] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:41] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:43] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:44] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:46] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:47] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:49] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:51] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:52] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:31:52] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 05:31:52] Starting function: run_magnet_analysis
+[2025-12-15 05:31:52] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 05:31:52] [Magnet] Magnet Checking Data（19850PCS) 20250414.pdf: mean=3.688, std=0.087, Cp=1.922, CpK=1.876, values=63
+[2025-12-15 05:31:53] [Magnet] Magnet checking（13,1640PCS) 20250522.pdf: mean=3.659, std=0.093, Cp=1.800, CpK=1.653, values=63
+[2025-12-15 05:31:53] [INFO] ✅ Magnet report created: Magnet Reports\Rexair_Magnet_Timing_CpK_Report_2025-12.pdf
+[2025-12-15 05:31:53] All selected analyses complete.
+[2025-12-15 05:41:01] === Rexair Analysis Agent Closed ===
+[2025-12-15 05:53:32] === Rexair Analysis Agent Launched ===
+[2025-12-15 05:53:35] Starting function: run_motor_analysis
+[2025-12-15 05:53:35] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 05:53:36] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:37] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:37] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:38] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:39] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:40] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:41] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:41] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:42] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:42] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:43] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:44] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:45] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:45] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:46] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:47] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:48] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:49] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:49] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:50] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:51] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:52] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:53] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 05:53:53] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 05:53:53] Starting function: run_magnet_analysis
+[2025-12-15 05:53:53] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 05:53:53] [Magnet] Magnet Checking Data（19850PCS) 20250414.pdf: mean=3.688, std=0.087, Cp=1.922, CpK=1.876, values=63
+[2025-12-15 05:53:53] [Magnet] Magnet checking（13,1640PCS) 20250522.pdf: mean=3.659, std=0.093, Cp=1.800, CpK=1.653, values=63
+[2025-12-15 05:53:53] [INFO] ✅ Magnet report created: Magnet Reports\Rexair_Magnet_Timing_CpK_Report_2025-12.pdf
+[2025-12-15 05:53:53] All selected analyses complete.
+[2025-12-15 06:19:14] === Rexair Analysis Agent Launched ===
+[2025-12-15 06:19:17] Starting function: run_motor_analysis
+[2025-12-15 06:19:17] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 06:19:18] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:19] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:20] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:20] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:21] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:22] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:23] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:24] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:24] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:25] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:25] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:26] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:27] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:28] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:28] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:29] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:30] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:31] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:32] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:32] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:33] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:34] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:35] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 06:19:35] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 06:19:35] Starting function: run_magnet_analysis
+[2025-12-15 06:19:35] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 06:19:35] [Magnet] ⚠️ No valid 3.7±0.5° values found in Magnet Checking Data（19850PCS) 20250414.pdf
+[2025-12-15 06:19:35] [Magnet] ⚠️ No valid 3.7±0.5° values found in Magnet checking（13,1640PCS) 20250522.pdf
+[2025-12-15 06:19:35] [INFO] ❌ No valid CpK results computed.
+[2025-12-15 06:19:35] All selected analyses complete.
+[2025-12-15 07:06:57] === Rexair Analysis Agent Launched ===
+[2025-12-15 07:07:00] Starting function: run_motor_analysis
+[2025-12-15 07:07:00] [INFO] Starting Rexair Motor Test Trend Analysis...
+[2025-12-15 07:07:01] [Motor] Skipped Motor Test Data-IN24012201(C6521240115-0001~6582)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:02] [Motor] Skipped Motor Test Data-IN24021601(C6521240205-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:03] [Motor] Skipped Motor Test Data-IN24041701(C6521240415-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:04] [Motor] Skipped Motor Test Data-IN24051301(C6521240503-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:05] [Motor] Skipped Motor Test Data-IN24060701(C6521240524-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:05] [Motor] Skipped Motor Test Data-IN24070301(C6521240617-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:06] [Motor] Skipped Motor Test Data-IN24072301(C6521240708-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:07] [Motor] Skipped Motor Test Data-IN24080901(C6521240729-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:08] [Motor] Skipped Motor Test Data-IN24082901(C6521240821-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:08] [Motor] Skipped Motor Test Data-IN24090601(C6521240905-0001~2016)(1).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:09] [Motor] Skipped Motor Test Data-IN24093001(C6521240916-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:09] [Motor] Skipped Motor Test Data-IN24102801(C6521241011-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:10] [Motor] Skipped Motor Test Data-IN24112601(C6521241105-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:11] [Motor] Skipped Motor Test Data-IN25010601(C6521241211-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:12] [Motor] Skipped Motor Test Data-IN25020401(C6521250108-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:13] [Motor] Skipped Motor Test Data-IN25022701(C6521250217-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:13] [Motor] Skipped Motor Test Data-IN25032001(C6521250313-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:14] [Motor] Skipped Motor Test Data-IN25051201(C6521250429-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:15] [Motor] Skipped Motor Test Data-IN25071001(C6521250523-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:16] [Motor] Skipped Motor Test Data-IN25080101(C6521250624-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:17] [Motor] Skipped Motor Test Data-IN25082701(C6521250725-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:17] [Motor] Skipped Motor Test Data-IN25120801(C6521250923-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:18] [Motor] Skipped Motor Tester Data-IN23112401(C6521231116-0001~6582).xlsx: No 'Input Power(W)' column found.
+[2025-12-15 07:07:18] [INFO] ❌ No valid motor trend data compiled.
+[2025-12-15 07:07:18] Starting function: run_magnet_analysis
+[2025-12-15 07:07:18] [INFO] Starting Rexair Magnet Timing CpK Analysis...
+[2025-12-15 07:07:18] [Magnet] ⚠️ No valid 3.7±0.5° values found in Magnet Checking Data（19850PCS) 20250414.pdf
+[2025-12-15 07:07:18] [Magnet] ⚠️ No valid 3.7±0.5° values found in Magnet checking（13,1640PCS) 20250522.pdf
+[2025-12-15 07:07:18] [INFO] ❌ No valid CpK results computed.
+[2025-12-15 07:07:18] All selected analyses complete.

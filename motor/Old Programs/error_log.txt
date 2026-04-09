@@ -1,0 +1,15 @@
+[2025-12-11 04:39:34.519818] Magnet Error: No valid magnet timing data.
+[2025-12-11 04:46:25.399874] Magnet Error: No valid magnet timing data.
+[2025-12-11 05:16:11.639478] Magnet Error: No valid magnet timing data.
+[2025-12-11 05:21:17.632627] Magnet Error: No valid magnet timing data.
+[2025-12-11 05:26:30.096339] [OK] Found 41 valid 3.7±0.5° values in Magnet Checking Data（19850PCS) 20250414.pdf
+[2025-12-11 05:26:30.104081] [OK] Found 41 valid 3.7±0.5° values in Magnet checking（13,1640PCS) 20250522.pdf
+[2025-12-11 05:42:22.038247] [OK] Found 41 valid 3.7±0.5° values in Magnet Checking Data（19850PCS) 20250414.pdf
+[2025-12-11 05:42:22.047201] [OK] Found 41 valid 3.7±0.5° values in Magnet checking（13,1640PCS) 20250522.pdf
+[2025-12-11 05:42:22.047579] [OK] 2025-04: mean=3.656, stdev=0.109, Cp=1.528, CpK=1.395
+[2025-12-11 05:42:22.047843] [OK] 2025-05: mean=3.617, stdev=0.108, Cp=1.547, CpK=1.291
+[2025-12-11 05:42:28.170395] Magnet Error: [Errno 13] Permission denied: 'C:\\Python Projects\\Data Agent\\Magnet Reports\\Rexair_Magnet_Timing_CpK_Report_2025-12.pdf'
+[2025-12-11 05:44:55.345492] [OK] Found 41 valid 3.7±0.5° values in Magnet Checking Data（19850PCS) 20250414.pdf
+[2025-12-11 05:44:55.353492] [OK] Found 41 valid 3.7±0.5° values in Magnet checking（13,1640PCS) 20250522.pdf
+[2025-12-11 05:44:55.353925] [OK] 2025-04: mean=3.656, stdev=0.109, Cp=1.528, CpK=1.395
+[2025-12-11 05:44:55.354193] [OK] 2025-05: mean=3.617, stdev=0.108, Cp=1.547, CpK=1.291

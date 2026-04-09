@@ -1,0 +1,1011 @@
+# ============================================================
+# SECTION 1
+# Motor & Magnet Analysis - Unified Script
+# Combines motor_agent5.py and motor_agent6a.py
+# ============================================================
+
+import os
+import re
+import sys
+import platform
+import subprocess
+from datetime import datetime
+import threading
+import queue
+import numpy as np
+import pandas as pd
+
+# Use a non-GUI backend for Matplotlib (safe for threading)
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+from fpdf import FPDF  # PDF generation
+import tkinter as tk   # GUI
+from tkinter import ttk
+import fitz            # PyMuPDF for PDF reading (and OCR)
+
+# Optional OCR dependencies for scanned PDFs (pytesseract)
+try:
+    from PIL import Image, ImageEnhance
+    import pytesseract
+    _HAS_TESSERACT = True
+except Exception:
+    Image = None
+    ImageEnhance = None
+    pytesseract = None
+    _HAS_TESSERACT = False
+
+# Configuration: output folders and spec limits
+REPORT_FOLDER_MOTOR = "Motor Reports"
+REPORT_FOLDER_MAGNET = "Magnet Reports"
+LOGO_FILE = "rexair_logo.png"  # optional company logo for PDF
+
+# Spec target and tolerance for magnet timing (for Cp/CpK calculation)
+MAGNET_TARGET = 3.7
+MAGNET_TOL = 0.5
+LSL = MAGNET_TARGET - MAGNET_TOL  # Lower spec limit
+USL = MAGNET_TARGET + MAGNET_TOL  # Upper spec limit
+
+# Ensure output directories exist
+os.makedirs(REPORT_FOLDER_MOTOR, exist_ok=True)
+os.makedirs(REPORT_FOLDER_MAGNET, exist_ok=True)
+
+# When running unattended (e.g., Power Automate Desktop), do NOT open PDFs automatically.
+OPEN_REPORTS = False
+
+# ============================================================
+# Utility: Open File (to automatically show the PDF after creation)
+# ============================================================
+def open_file(filepath):
+    """Open a file using the default application, depending on OS."""
+    try:
+        if platform.system() == "Windows":
+            os.startfile(filepath)
+        elif platform.system() == "Darwin":
+            subprocess.run(["open", filepath])
+        else:
+            subprocess.run(["xdg-open", filepath])
+    except Exception as e:
+        print(f"[WARN] Could not open file: {e}")
+
+# ============================================================
+# Numeric Safety Helpers (for calculating robust stats)
+# ============================================================
+def safe_numeric_array(values):
+    """Convert a list of values to a NumPy array of floats, ignoring invalid entries."""
+    s = pd.to_numeric(pd.Series(list(values)), errors="coerce")
+    s = s.replace([np.inf, -np.inf], np.nan).dropna()
+    return s.to_numpy(dtype=float)
+
+def safe_mean(values):
+    arr = safe_numeric_array(values)
+    return float(arr.mean()) if arr.size else 0.0
+
+def safe_median(values):
+    arr = safe_numeric_array(values)
+    return float(np.median(arr)) if arr.size else 0.0
+
+def safe_stdev(values):
+    arr = safe_numeric_array(values)
+    if arr.size < 2:
+        return 0.0
+    return float(np.std(arr, ddof=1))
+
+# ============================================================
+#   SECTION 2
+#   Data Extract Helpers (Motor)
+# ============================================================
+def extract_date_from_filename(fname):
+    """
+    Extract date from filename of form 'C6521YYMMDD'.
+    Example: 'C6521240517' -> datetime.date(2024, 05, 17)
+    """
+    m = re.search(r"C6521(\d{6})", fname)
+    if not m:
+        return None
+    try:
+        return datetime.strptime(m.group(1), "%y%m%d")
+    except Exception:
+        return None
+
+def find_input_power_column(df):
+    """Find the column index in DataFrame `df` that contains motor Input Power data."""
+    for i in range(min(10, len(df))):
+        row = df.iloc[i].astype(str).tolist()
+        for j, cell in enumerate(row):
+            cell_lower = cell.lower()
+            if "high speed(open)" in cell_lower and "input power" in cell_lower:
+                return j
+    for i in range(min(10, len(df))):
+        row = df.iloc[i].astype(str).tolist()
+        for j, cell in enumerate(row):
+            if "input power" in cell.lower():
+                return j
+    return None
+
+def read_input_power(filepath):
+    """Read the motor input power values from the Excel file (all values under the 'Input Power' column)."""
+    try:
+        df = pd.read_excel(filepath, header=None, engine="openpyxl")
+    except Exception as e:
+        print(f"[ERROR] Could not read excel: {filepath} -> {e}")
+        return []
+    col_idx = find_input_power_column(df)
+    if col_idx is None:
+        print(f"[WARN] Could not find 'High Speed(Open)' and 'Input Power' in {os.path.basename(filepath)}")
+        return []
+    values = []
+    for v in df.iloc[:, col_idx].tolist():
+        try:
+            fv = float(v)
+            if np.isfinite(fv):
+                values.append(fv)
+        except Exception:
+            continue
+    return values
+
+
+# ============================================================
+# Motor Data Extract (Open Watts)
+# ============================================================
+def find_open_watts_column(df):
+    """Find the column index in DataFrame `df` that contains motor Open Watts data."""
+    # Look for explicit 'Open Watts' label first
+    for i in range(min(15, len(df))):
+        row = df.iloc[i].astype(str).tolist()
+        for j, cell in enumerate(row):
+            cell_lower = cell.lower()
+            if 'open watts' in cell_lower or ('high speed(open)' in cell_lower and 'watts' in cell_lower):
+                return j
+    return None
+
+def read_open_watts(filepath):
+    """Read motor Open Watts values from the Excel file (all values under the 'Open Watts' column)."""
+    try:
+        df = pd.read_excel(filepath, header=None, engine='openpyxl')
+    except Exception as e:
+        print(f'[ERROR] Could not read excel: {filepath} -> {e}')
+        return []
+    col_idx = find_open_watts_column(df)
+    if col_idx is None:
+        # Fallback to existing Input Power extraction
+        return read_input_power(filepath)
+
+    values = []
+    for v in df.iloc[:, col_idx].tolist():
+        try:
+            fv = float(v)
+            if np.isfinite(fv):
+                values.append(fv)
+        except Exception:
+            continue
+    return values
+
+# ============================================================
+# Motor Diagnostics (Pass/Fail text overlay on charts)
+# ============================================================
+def add_motor_diagnostics(ax, months, month_values):
+    """
+    Add diagnostic text to the motor charts indicating if the last 12/3 months 
+    medians and standard deviations are within control (3σ limits).
+    """
+    medians = [safe_median(v) for v in month_values]
+    stds    = [safe_stdev(v) for v in month_values]
+    dfm = pd.DataFrame({"Month": months, "Median": medians, "StdDev": stds}).dropna()
+    dfm = dfm.sort_values("Month")
+    def check(series, ok_text, bad_text):
+        if len(series) < 2:
+            return ok_text, "green"
+        mu = float(series.mean())
+        sigma = float(series.std(ddof=1))
+        if sigma == 0:
+            return ok_text, "green"
+        lower = mu - 3.0 * sigma
+        upper = mu + 3.0 * sigma
+        current_val = float(series.iloc[-1])
+        return (ok_text, "green") if (lower <= current_val <= upper) else (bad_text, "red")
+    last_12 = dfm.tail(12)
+    last_3  = dfm.tail(3)
+    results = [
+        check(last_12["Median"], "12 Month Median is OK", "12 Month Median is Bad"),
+        check(last_3["Median"],  "3 Month Median is OK",  "3 Month Median is Bad"),
+        check(last_12["StdDev"], "12 Month Standard Deviation is Good", "12 Month Standard Deviation is Bad"),
+        check(last_3["StdDev"],  "3 Month Standard Deviation is Good",  "3 Month Standard Deviation is Bad"),
+    ]
+    y_positions = [0.98, 0.92, 0.86, 0.80]
+    for (txt, color), y in zip(results, y_positions):
+        ax.text(0.01, y, txt, transform=ax.transAxes,
+                fontsize=11, fontweight="bold", color=color, va="top")
+
+# ============================================================
+# PDF Report: Motor Data
+# ============================================================
+def create_motor_pdf(output_path, months, month_values):
+    """Generate a PDF report for motor input power trends (distribution and std dev over time)."""
+    pdf = FPDF()
+    pdf.add_page()
+    if os.path.exists(LOGO_FILE):
+        pdf.image(LOGO_FILE, x=10, y=8, w=28)
+    pdf.set_font("Arial", "B", 16)
+    pdf.set_xy(45, 10)
+    pdf.cell(0, 10, "Rexair Motor Test Trend Analysis", ln=True)
+    # Chart 1: Distribution per month (boxplot)
+    plt.figure(figsize=(8.5, 4.2))
+    month_labels = [m.strftime("%b %Y") for m in months]
+    plt.boxplot(month_values, tick_labels=month_labels, showfliers=False)
+    plt.title("Input Power (W): Monthly Distribution")
+    plt.ylabel("Watts")
+    ax = plt.gca()
+    add_motor_diagnostics(ax, months, month_values)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    img_box = "motor_boxplot_temp.png"
+    plt.savefig(img_box, dpi=300)
+    plt.close()
+    pdf.image(img_box, x=10, y=30, w=190)
+    # Chart 2: Standard deviation over time
+    monthly_stds = [safe_stdev(v) for v in month_values]
+    plt.figure(figsize=(8.5, 3.0))
+    plt.plot(month_labels, monthly_stds, marker="o")
+    plt.title("Standard Deviation Over Time")
+    plt.ylabel("Std Dev (W)")
+    plt.grid(True)
+    ax = plt.gca()
+    add_motor_diagnostics(ax, months, month_values)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    img_std = "motor_std_temp.png"
+    plt.savefig(img_std, dpi=300)
+    plt.close()
+    pdf.image(img_std, x=10, y=125, w=190)
+    # Page 2: Summary
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Monthly Summary", ln=True)
+    pdf.set_font("Arial", "", 11)
+    for m, vals in zip(months, month_values):
+        mu = safe_mean(vals)
+        sd = safe_stdev(vals)
+        med = safe_median(vals)
+        pdf.cell(0, 8, f"{m.strftime('%Y-%m')}: Mean={mu:.2f} W, Median={med:.2f} W, StdDev={sd:.4f}", ln=True)
+    pdf.output(output_path)
+    for tmp in (img_box, img_std):
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except Exception:
+            pass
+
+# ============================================================
+# SECTION 3
+# Fuzzy Extraction of Timing Values from PDF Text
+# ============================================================
+# ============================================================
+# SECTION 3
+# Magnet Data Analysis (PDF/Excel Parsing, CpK Logic, PDF Generation)
+# ============================================================
+
+def extract_pdf_text_with_ocr_fallback(full_path, ocr_language="eng"):
+    """
+    Extract text from a PDF.
+    1) Try standard text extraction (if PDF has a text layer)
+    2) Fallback to OCR via PyMuPDF (if available)
+    Returns: (text, mode)
+    mode is one of: "text", "ocr", "failed_ocr:<err>", "read_error:<err>"
+    """
+    try:
+        doc = fitz.open(full_path)
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        doc.close()
+    except Exception as e:
+        return "", f"read_error:{e}"
+    if len(text.strip()) >= 50:
+        return text, "text"
+    try:
+        doc = fitz.open(full_path)
+        ocr_text = ""
+        for page in doc:
+            tp = page.get_textpage_ocr(language=ocr_language, dpi=300, full=True)
+            ocr_text += page.get_text("text", textpage=tp)
+        doc.close()
+        return ocr_text, "ocr"
+    except Exception as e:
+        return text, f"failed_ocr:{e}"
+
+def extract_month_from_pdf_filename(fname, full_path):
+    m = re.search(r"(\d{8})", fname)
+    if m:
+        try:
+            dt = datetime.strptime(m.group(1), "%Y%m%d").date()
+            return dt.replace(day=1)
+        except Exception:
+            pass
+    dt = datetime.fromtimestamp(os.path.getmtime(full_path)).date()
+    return dt.replace(day=1)
+
+def _to_float(s):
+    return float(str(s).replace(",", "").strip())
+
+def extract_mean_std_cp_cpk(text):
+    t = text.replace("\u00a0", " ")
+    t = re.sub(r"[\t ]+", " ", t)
+    number_pat = r"([\-+]?\d[\d,]*\.?\d*)"
+    mean_pats = [
+        rf"\bMean\b\s*[:=]?\s*{number_pat}",
+        rf"\bAverage\b\s*[:=]?\s*{number_pat}",
+        rf"\bX\s*bar\b\s*[:=]?\s*{number_pat}",
+        rf"\bXbar\b\s*[:=]?\s*{number_pat}",
+    ]
+    std_pats = [
+        rf"\bStd\s*Dev\b\s*[:=]?\s*{number_pat}",
+        rf"\bStdDev\b\s*[:=]?\s*{number_pat}",
+        rf"\bStdev\b\s*[:=]?\s*{number_pat}",
+        rf"\bStandard\s*Deviation\b\s*[:=]?\s*{number_pat}",
+        rf"\bSigma\b\s*[:=]?\s*{number_pat}",
+        rf"\bσ\b\s*[:=]?\s*{number_pat}",
+    ]
+    cp_pats = [rf"\bCp\b\s*[:=]?\s*{number_pat}"]
+    cpk_pats = [
+        rf"\bCpK\b\s*[:=]?\s*{number_pat}",
+        rf"\bCpk\b\s*[:=]?\s*{number_pat}",
+        rf"\bCPK\b\s*[:=]?\s*{number_pat}",
+    ]
+    out = {"mean": None, "std": None, "cp": None, "cpk": None}
+    for pat in mean_pats:
+        m = re.search(pat, t, re.IGNORECASE)
+        if m:
+            out["mean"] = _to_float(m.group(1)); break
+    for pat in std_pats:
+        s = re.search(pat, t, re.IGNORECASE)
+        if s:
+            out["std"] = _to_float(s.group(1)); break
+    for pat in cp_pats:
+        c = re.search(pat, t, re.IGNORECASE)
+        if c:
+            out["cp"] = _to_float(c.group(1)); break
+    for pat in cpk_pats:
+        k = re.search(pat, t, re.IGNORECASE)
+        if k:
+            out["cpk"] = _to_float(k.group(1)); break
+    return out
+
+def compute_cp_cpk(mean, std):
+    if std is None or std <= 0:
+        return 0.0, 0.0
+    cp = (USL - LSL) / (6.0 * std)
+    cpk = min((mean - LSL) / (3.0 * std), (USL - mean) / (3.0 * std))
+    return cp, cpk
+
+def _extract_timing_values_fuzzy(raw_text, target_count=30):
+    if not raw_text:
+        return []
+    t = raw_text.replace("°", " ")
+    t = t.replace('O', '0').replace('o', '0')
+    t = t.replace('S', '5')
+    t = t.replace('I', '1').replace('l', '1')
+    t = t.replace(',', '.').replace('·', '.').replace(':', '.')
+    header = re.search(r"3\.7\s*(?:±|\+/-)\s*0\.5", t)
+    scan_text = t[header.start():] if header else t
+    vals = []
+    for m in re.finditer(r"\b([34]\.[0-9]{1,2})\b", scan_text):
+        try:
+            v = float(m.group(1))
+        except Exception:
+            continue
+        if 3.0 <= v <= 4.5:
+            vals.append(v)
+        if len(vals) >= target_count:
+            return vals[:target_count]
+    for m in re.finditer(r"\b([34][0-9]{2})\b", scan_text):
+        s = m.group(1)
+        try:
+            v = float(s) / 100.0
+        except Exception:
+            continue
+        if 3.0 <= v <= 4.5:
+            vals.append(v)
+        if len(vals) >= target_count:
+            return vals[:target_count]
+    return vals[:target_count]
+
+def extract_timing_values_from_pdf(text):
+    return _extract_timing_values_fuzzy(text, target_count=30)
+
+def extract_timing_values_from_pdf_images(pdf_path, dpi=450):
+    if not _HAS_TESSERACT:
+        return []
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception:
+        return []
+    configs = [
+        '--psm 6 -c tessedit_char_whitelist=0123456789.',
+        '--psm 4 -c tessedit_char_whitelist=0123456789.',
+        '--psm 11 -c tessedit_char_whitelist=0123456789.'
+    ]
+    for page_index in range(doc.page_count):
+        page = doc.load_page(page_index)
+        pix = page.get_pixmap(dpi=dpi)
+        img = Image.frombytes('RGB', [pix.width, pix.height], pix.samples).convert('L')
+        w, h = img.size
+        if w >= h:
+            boxes = [(0.55, 0.10, 0.95, 0.95), (0.60, 0.10, 0.98, 0.95), (0.50, 0.15, 0.95, 0.98)]
+        else:
+            boxes = [(0.55, 0.12, 0.92, 0.95), (0.60, 0.12, 0.98, 0.95), (0.50, 0.15, 0.95, 0.98)]
+        for (lx, ty, rx, by) in boxes:
+            crop = img.crop((int(w * lx), int(h * ty), int(w * rx), int(h * by)))
+            crop = ImageEnhance.Contrast(crop).enhance(3.2)
+            crop = crop.point(lambda p: 255 if p > 185 else 0)
+            for cfg in configs:
+                try:
+                    ocr_text = pytesseract.image_to_string(crop, config=cfg)
+                except Exception:
+                    continue
+                vals = _extract_timing_values_fuzzy(ocr_text, target_count=30)
+                if len(vals) >= 25:
+                    doc.close()
+                    return vals[:30]
+    doc.close()
+    return []
+
+def read_magnet_timing_from_excel(filepath):
+    try:
+        df = pd.read_excel(filepath, sheet_name=1, header=None, engine="openpyxl")
+    except Exception as e:
+        print(f"[MAGNET] Could not read excel: {filepath} -> {e}")
+        return []
+    header_pat = re.compile(r"3\.7\s*(?:±|\+/-)\s*0\.5\s*°?", re.IGNORECASE)
+    col_idx = None
+    for i in range(min(10, len(df))):
+        row = df.iloc[i].astype(str).tolist()
+        for j, cell in enumerate(row):
+            if header_pat.search(cell):
+                col_idx = j
+                break
+        if col_idx is not None:
+            break
+    if col_idx is None:
+        non_empty_cols = [c for c in range(df.shape[1]) if df.iloc[:, c].notna().sum() > 0]
+        col_idx = non_empty_cols[-1] if non_empty_cols else None
+    if col_idx is None:
+        print(f"[MAGNET] Could not locate '3.7 +/- .5' column in {os.path.basename(filepath)}")
+        return []
+    values = []
+    for v in df.iloc[:, col_idx].tolist():
+        try:
+            s = str(v).replace("°", "").strip()
+            if s == "" or s.lower() in {"nan", "none"}:
+                continue
+            fv = float(s)
+            if 3.0 <= fv <= 4.5:
+                values.append(fv)
+        except Exception:
+            continue
+    return values[:30]
+
+def dump_magnet_debug(base_dir, pdf_filename, extracted_text):
+    debug_dir = os.path.join(base_dir, "Magnet Debug")
+    os.makedirs(debug_dir, exist_ok=True)
+    base = os.path.splitext(os.path.basename(pdf_filename))[0]
+    out_txt = os.path.join(debug_dir, f"{base}_textdump.txt")
+    try:
+        with open(out_txt, "w", encoding="utf-8", errors="ignore") as f:
+            f.write(extracted_text)
+        print(f"[MAGNET] Debug text dumped to: {out_txt}")
+    except Exception as e:
+        print(f"[MAGNET] Could not write debug dump: {e}")
+
+# ============================================================
+# PDF Report: Magnet Data
+# ============================================================
+def create_magnet_pdf(output_path, rows):
+    pdf = FPDF()
+    pdf.add_page()
+    if os.path.exists(LOGO_FILE):
+        pdf.image(LOGO_FILE, x=10, y=8, w=28)
+    pdf.set_font("Arial", "B", 16)
+    pdf.set_xy(45, 10)
+    pdf.cell(0, 10, "Rexair Magnet Timing CpK Report", ln=True)
+
+    labels = [r.get("label") or r["month_dt"].strftime("%b %Y") for r in rows]
+    cpks = [r["cpk"] for r in rows]
+
+    plt.figure(figsize=(8.5, 4.0))
+    plt.plot(labels, cpks, marker="o")
+    plt.axhline(1.33, color="black", linestyle="--", linewidth=1.3)
+    plt.title("Magnet Timing CpK Over Time (Per File)")
+    plt.xlabel("File within Month")
+    plt.ylabel("CpK")
+    plt.ylim(0, max(4, (max(cpks) if cpks else 4)))
+    plt.grid(True)
+
+    ax = plt.gca()
+    latest_cpk = cpks[-1] if cpks else None
+    if latest_cpk is not None:
+        if latest_cpk >= 1.33:
+            ax.text(0.5, 0.5, "CpK is Good", transform=ax.transAxes,
+                    fontsize=18, fontweight="bold", color="green",
+                    ha="center", va="center")
+        else:
+            ax.text(0.5, 0.5, "CpK is BAD", transform=ax.transAxes,
+                    fontsize=18, fontweight="bold", color="red",
+                    ha="center", va="center")
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    img = "magnet_cpk_temp.png"
+    plt.savefig(img, dpi=300)
+    plt.close()
+    pdf.image(img, x=10, y=30, w=190)
+
+    pdf.set_xy(10, 125)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Per-File Summary Table", ln=True)
+    pdf.set_font("Arial", "", 11)
+    for r in rows:
+        label = r.get("label") or r["month_dt"].strftime("%B %Y")
+        pdf.cell(0, 8, f"{label} "
+                       f"Mean: {r['mean']:.4f}  "
+                       f"Std: {r['std']:.4f}  "
+                       f"Cp: {r['cp']:.2f}  "
+                       f"CpK: {r['cpk']:.2f}", ln=True)
+
+    pdf.output(output_path)
+    try:
+        if os.path.exists(img):
+            os.remove(img)
+    except Exception:
+        pass
+
+# ============================================================
+# SECTION 4
+# Analysis Runner: Motor Data
+# ============================================================
+def run_motor_analysis(q=None, cancel_flag=None):
+    """Process all motor (Excel) files, generate trend analysis PDF in the Motor Reports folder."""
+    base = os.getcwd()
+#   base = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))
+    report_dir = os.path.join(base, REPORT_FOLDER_MOTOR)
+    os.makedirs(report_dir, exist_ok=True)
+
+    files = [f for f in os.listdir(base) if f.lower().endswith(".xlsx")]
+    dated = []
+    for f in files:
+        d = extract_date_from_filename(f)
+        if d:
+            dated.append((d, f))
+
+    dated.sort(key=lambda x: x[0])
+    monthly_data = {}
+    for d, f in dated:
+        if cancel_flag and cancel_flag.get("stop"):
+            return
+        month_key = d.strftime("%Y-%m")
+        vals = read_input_power(os.path.join(base, f))
+        if vals:
+            monthly_data.setdefault(month_key, []).extend(vals)
+
+    if not monthly_data:
+        print("❌ No motor Input Power data found.")
+        return
+
+    all_months = sorted(datetime.strptime(m, "%Y-%m") for m in monthly_data.keys())
+    recent_months = all_months[-12:]
+    month_values = [monthly_data[m.strftime("%Y-%m")] for m in recent_months]
+
+    filename = f"Rexair_Motor_Test_Trend_Analysis_{datetime.now():%Y-%m}.pdf"
+    outpath = os.path.join(report_dir, filename)
+    create_motor_pdf(outpath, recent_months, month_values)
+    print(f"[INFO] ✅ Motor report created: {outpath}")
+    
+    if OPEN_REPORTS:
+        open_file(outpath)
+
+# ============================================================
+# Analysis Runner: Magnet Data
+# ============================================================
+def run_magnet_analysis(q=None, cancel_flag=None):
+    """Process all magnet timing PDF (and Excel) files, generate CpK analysis PDF in the Magnet Reports folder."""
+    base = os.getcwd()
+#base = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))  
+    print(f"[DEBUG] Current working directory: {base}")
+    print(f"[DEBUG] Files in directory: {os.listdir(base)}")
+    report_dir = os.path.join(base, REPORT_FOLDER_MAGNET)
+    os.makedirs(report_dir, exist_ok=True)
+    rows = []
+
+    # --- Process PDFs ---
+    pdf_files = [f for f in os.listdir(base) if f.lower().endswith(".pdf")]
+    if not pdf_files:
+        print("No PDF files found in script folder for magnet analysis.")        
+
+    for f in pdf_files:
+        if cancel_flag and cancel_flag.get("stop"):
+            return
+        full_path = os.path.join(base, f)
+        text, mode = extract_pdf_text_with_ocr_fallback(full_path, ocr_language="eng")
+        if mode.startswith("read_error"):
+            print(f"[MAGNET] SKIP (can't read): {f} -> {mode}")
+            continue
+        if len(text.strip()) < 50:
+            print(f"[MAGNET] SKIP (no extractable text even after OCR={mode}): {f}")
+            dump_magnet_debug(base, f, text)
+            continue
+        if mode == "ocr":
+            print(f"[MAGNET] OCR used for: {f}")
+
+        lbl = extract_mean_std_cp_cpk(text)
+        mean = lbl["mean"]
+        std = lbl["std"]
+        cp = lbl["cp"]
+        cpk = lbl["cpk"]
+
+        if (mean is None or std is None) or (std is not None and std <= 0):
+            raw_vals = extract_timing_values_from_pdf(text)
+            if len(raw_vals) < 20:
+                img_vals = extract_timing_values_from_pdf_images(full_path)
+                if len(img_vals) >= 20:
+                    raw_vals = img_vals
+                    print(f"[MAGNET] Image-OCR used for timing values: {f}")
+            if len(raw_vals) >= 20:
+                arr = np.array(raw_vals, dtype=float)
+                mean = float(arr.mean())
+                std = float(arr.std(ddof=1))
+                cp, cpk = compute_cp_cpk(mean, std)
+            else:
+                print(f"[MAGNET] SKIP (Mean/Std not found AND could not parse timing values): {f}")
+                dump_magnet_debug(base, f, text)
+                continue
+
+        month_dt = extract_month_from_pdf_filename(f, full_path)
+        rows.append({
+            "month_dt": month_dt,
+            "mean": float(mean),
+            "std": float(std),
+            "cp": float(cp if cp is not None else compute_cp_cpk(mean, std)[0]),
+            "cpk": float(cpk if cpk is not None else compute_cp_cpk(mean, std)[1]),
+            "source_file": f
+        })
+        print(f"[MAGNET] OK(PDF): {f} {month_dt.strftime('%Y-%m')} "
+              f"mean={mean:.4f} std={std:.4f} cp={rows[-1]['cp']:.2f} cpk={rows[-1]['cpk']:.2f}")
+
+    # --- Process Excel files ---
+    xlsx_files = [f for f in os.listdir(base) if f.lower().endswith(".xlsx") and 'magnet' in f.lower()]
+    for f in xlsx_files:
+        if cancel_flag and cancel_flag.get("stop"):
+            return
+        full = os.path.join(base, f)
+        vals30 = read_magnet_timing_from_excel(full)
+        if len(vals30) >= 20:
+            arr = np.array(vals30, dtype=float)
+            mean = float(arr.mean())
+            std = float(arr.std(ddof=1))
+            cp, cpk = compute_cp_cpk(mean, std)
+            month_dt = extract_month_from_pdf_filename(f, full)
+            rows.append({
+                "month_dt": month_dt,
+                "mean": mean,
+                "std": std,
+                "cp": cp,
+                "cpk": cpk,
+                "source_file": f
+            })
+            print(f"[MAGNET] OK(Excel): {f} {month_dt.strftime('%Y-%m')} "
+                  f"mean={mean:.4f} std={std:.4f} cp={cp:.2f} cpk={cpk:.2f}")
+
+    if not rows:
+        print("❌ No magnet data found. Check: Magnet Debug text dumps or Excel Sheet 2 header.")
+        return
+
+    # Label each entry per month (e.g., "January 1", "January 2")
+    rows.sort(key=lambda r: (r["month_dt"], r["source_file"]))
+    from collections import defaultdict
+    month_counters = defaultdict(int)
+    for r in rows:
+        month_counters[r["month_dt"]] += 1
+        r["label"] = f"{r['month_dt'].strftime('%B')} {month_counters[r['month_dt']]}"
+
+    filename = f"Rexair_Magnet_Timing_CpK_Report_{datetime.now():%Y-%m}.pdf"
+    outpath = os.path.join(report_dir, filename)
+    create_magnet_pdf(outpath, rows)
+    print(f"[INFO] ✅ Magnet report created: {outpath}")
+    
+    if OPEN_REPORTS:
+        open_file(outpath)
+
+
+
+# ============================================================
+# SECTION 4B
+# Headless (PAD/CLI) single-run analysis
+# ============================================================
+import json
+import argparse
+from pathlib import Path
+
+
+def analyze_motor_file(motor_xlsx_path):
+    """Analyze a single motor Excel file and return stats + generate a PDF report in REPORT_FOLDER_MOTOR."""
+    motor_xlsx_path = str(motor_xlsx_path)
+    vals = read_open_watts(motor_xlsx_path)
+    arr = safe_numeric_array(vals)
+    if arr.size == 0:
+        return {
+            'count': 0,
+            'mean_watts': None,
+            'median_watts': None,
+            'std_watts': None
+        }, None
+
+    # Month bucket based on C6521YYMMDD pattern if present; otherwise use file modified date
+    d = extract_date_from_filename(os.path.basename(motor_xlsx_path))
+    if d is None:
+        d = datetime.fromtimestamp(os.path.getmtime(motor_xlsx_path))
+    month_dt = datetime(d.year, d.month, 1)
+
+    # Generate a 1-month PDF report using existing chart code
+    report_dir = Path(os.getcwd()) / REPORT_FOLDER_MOTOR
+    report_dir.mkdir(parents=True, exist_ok=True)
+    outname = f'Rexair_Motor_Test_Trend_Analysis_{datetime.now():%Y-%m}.pdf'
+    outpath = str(report_dir / outname)
+    create_motor_pdf(outpath, [month_dt], [arr.tolist()])
+
+    stats = {
+        'count': int(arr.size),
+        'mean_watts': float(arr.mean()),
+        'median_watts': float(np.median(arr)),
+        'std_watts': float(np.std(arr, ddof=1)) if arr.size >= 2 else 0.0
+    }
+    return stats, outpath
+
+
+def analyze_magnet_pdf_file(magnet_pdf_path):
+    """Analyze a single magnet PDF file and return stats + generate a CpK PDF report in REPORT_FOLDER_MAGNET."""
+    magnet_pdf_path = str(magnet_pdf_path)
+    text, mode = extract_pdf_text_with_ocr_fallback(magnet_pdf_path, ocr_language='eng')
+    if mode.startswith('read_error'):
+        return {
+            'mode': mode,
+            'mean': None,
+            'std': None,
+            'cp': None,
+            'cpk': None
+        }, None
+
+    lbl = extract_mean_std_cp_cpk(text)
+    mean = lbl.get('mean')
+    std = lbl.get('std')
+    cp = lbl.get('cp')
+    cpk = lbl.get('cpk')
+
+    # Fallback: compute from extracted timing values
+    if mean is None or std is None or (std is not None and std <= 0):
+        raw_vals = extract_timing_values_from_pdf(text)
+        if len(raw_vals) >= 20:
+            arr = np.array(raw_vals, dtype=float)
+            mean = float(arr.mean())
+            std = float(arr.std(ddof=1)) if arr.size >= 2 else 0.0
+            cp, cpk = compute_cp_cpk(mean, std)
+        else:
+            # If we can't compute, return what we have
+            return {
+                'mode': mode,
+                'mean': mean,
+                'std': std,
+                'cp': cp,
+                'cpk': cpk
+            }, None
+
+    if cp is None or cpk is None:
+        cp2, cpk2 = compute_cp_cpk(mean, std)
+        cp = cp if cp is not None else cp2
+        cpk = cpk if cpk is not None else cpk2
+
+    month_dt = extract_month_from_pdf_filename(os.path.basename(magnet_pdf_path), magnet_pdf_path)
+    row = {
+        'month_dt': month_dt,
+        'mean': float(mean),
+        'std': float(std),
+        'cp': float(cp),
+        'cpk': float(cpk),
+        'source_file': os.path.basename(magnet_pdf_path),
+        'label': month_dt.strftime('%b %Y')
+    }
+
+    report_dir = Path(os.getcwd()) / REPORT_FOLDER_MAGNET
+    report_dir.mkdir(parents=True, exist_ok=True)
+    outname = f'Rexair_Magnet_Timing_CpK_Report_{datetime.now():%Y-%m}.pdf'
+    outpath = str(report_dir / outname)
+    create_magnet_pdf(outpath, [row])
+
+    stats = {
+        'mode': mode,
+        'mean': float(mean),
+        'std': float(std),
+        'cp': float(cp),
+        'cpk': float(cpk)
+    }
+    return stats, outpath
+
+
+def classify_status(motor_stats, magnet_stats):
+    """Return PASS/REVIEW/FAIL based on magnet CpK (primary) and basic motor sanity."""
+    # Motor must have data
+    if not motor_stats or motor_stats.get('count', 0) == 0:
+        return 'FAIL'
+
+    cpk = magnet_stats.get('cpk') if magnet_stats else None
+    if cpk is None:
+        return 'REVIEW'
+    # Thresholds (adjust later): <1.33 FAIL, 1.33-1.67 REVIEW, >=1.67 PASS
+    if cpk < 1.33:
+        return 'FAIL'
+    if cpk < 1.67:
+        return 'REVIEW'
+    return 'PASS'
+
+
+def analyze_single_run(motor_xlsx, magnet_pdf, workdir, out_json, open_reports=False):
+    """
+    PAD-friendly single-run entry point.
+    - Copies the two inputs into an isolated working folder
+    - Runs analysis
+    - Writes a result JSON
+    - Returns payload dict
+    """
+    global OPEN_REPORTS
+    OPEN_REPORTS = bool(open_reports)
+
+    workdir = Path(workdir)
+    workdir.mkdir(parents=True, exist_ok=True)
+
+    # Copy inputs into workdir to avoid accidental extra files affecting analysis
+    motor_dst = workdir / Path(motor_xlsx).name
+    magnet_dst = workdir / Path(magnet_pdf).name
+    motor_dst.write_bytes(Path(motor_xlsx).read_bytes())
+    magnet_dst.write_bytes(Path(magnet_pdf).read_bytes())
+
+    # Work from that directory
+    os.chdir(workdir)
+
+    motor_stats, motor_report = analyze_motor_file(motor_dst)
+    magnet_stats, magnet_report = analyze_magnet_pdf_file(magnet_dst)
+
+    status = classify_status(motor_stats, magnet_stats)
+
+    payload = {
+        'status': status,
+        'motor': motor_stats,
+        'magnet': magnet_stats,
+        'motor_report': motor_report,
+        'magnet_report': magnet_report,
+        'generated_at': datetime.now().isoformat()
+    }
+
+    out_json = Path(out_json)
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(payload, indent=2), encoding='utf-8')
+    return payload
+
+
+# ============================================================
+# SECTION 5
+# GUI / Threading
+# ============================================================
+def start_threaded(funcs):
+    """Run given list of functions in sequence on a background thread (for GUI)."""
+    root = tk.Tk()
+    root.title("Running...")
+    root.geometry("420x120")
+
+    tk.Label(root, text="Processing...", font=("Segoe UI", 12)).pack(pady=10)
+    bar = ttk.Progressbar(root, mode="indeterminate")
+    bar.pack(pady=6, fill="x", padx=20)
+    bar.start()
+
+    q = queue.Queue()
+    cancel_flag = {"stop": False}
+
+    def worker():
+        for func in funcs:
+            try:
+                func(q, cancel_flag)
+            except Exception as e:
+                print(f"[ERROR] Worker exception: {e}")
+        q.put("done")
+
+    def check_done():
+        try:
+            msg = q.get_nowait()
+            if msg == "done":
+                try:
+                    bar.stop()
+                except Exception:
+                    pass
+                try:
+                    root.destroy()
+                except Exception:
+                    pass
+                return
+        except queue.Empty:
+            pass
+        root.after(200, check_done)
+
+    def on_close():
+        cancel_flag["stop"] = True
+        try:
+            bar.stop()
+        except Exception:
+            pass
+        try:
+            root.destroy()
+        except Exception:
+            pass
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
+    t = threading.Thread(target=worker, daemon=True)
+    t.start()
+    root.after(200, check_done)
+    root.mainloop()
+
+def launch_gui():
+    """Launch the Tkinter GUI for interactive use."""
+    root = tk.Tk()
+    root.title("Motor & Magnet Analysis")
+    root.geometry("520x300")
+
+    tk.Label(root, text="Motor & Magnet Analysis", font=("Segoe UI", 14, "bold")).pack(pady=12)
+
+    tk.Button(
+        root,
+        text="Run Motor Analysis",
+        width=45,
+        command=lambda: start_threaded([run_motor_analysis])
+    ).pack(pady=8)
+
+    tk.Button(
+        root,
+        text="Run Magnet Analysis (PDF + Excel)",
+        width=45,
+        command=lambda: start_threaded([run_magnet_analysis])
+    ).pack(pady=8)
+
+    tk.Button(
+        root,
+        text="Run Both",
+        width=45,
+        command=lambda: start_threaded([run_motor_analysis, run_magnet_analysis])
+    ).pack(pady=8)
+
+    root.mainloop()
+
+# ============================================================
+# Entry Point
+# ============================================================
+if __name__ == "__main__":
+    # If called with --motor and --magnet, run headless for PAD/automation.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--motor", help="Path to motor Excel (.xlsx)")
+    parser.add_argument("--magnet", help="Path to magnet PDF (.pdf)")
+    parser.add_argument("--workdir", default=str(Path.cwd()), help="Working directory for this run")
+    parser.add_argument("--out", default=str(Path.cwd() / 'result.json'), help="Path to write result JSON")
+    parser.add_argument("--open-reports", action='store_true', help="Open generated PDFs (interactive only)")
+    args = parser.parse_args()
+
+    if args.motor and args.magnet:
+        result = analyze_single_run(args.motor, args.magnet, args.workdir, args.out, open_reports=args.open_reports)
+        # Exit codes PAD can use
+        if result.get('status') == 'PASS':
+            sys.exit(0)
+        if result.get('status') == 'REVIEW':
+            sys.exit(2)
+        if result.get('status') == 'FAIL':
+            sys.exit(3)
+        sys.exit(1)
+    else:
+        # Interactive GUI mode
+        OPEN_REPORTS = True
+        launch_gui()

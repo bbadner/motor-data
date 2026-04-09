@@ -1,0 +1,5 @@
+State=INSPECT
+shift_signed=-1 shift_abs=1 shift_med=1
+score=0.8788632777539529 score_med=0.8884312510490417
+resid=0.2913978397846222 resid_med=0.1849375069141388
+ORB matches=100 inliers=73 ratio=0.730

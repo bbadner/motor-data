@@ -1,0 +1,1 @@
+baseline=20, boundary_med=245, gap=225, max_gap_stable=0, stable_count=0

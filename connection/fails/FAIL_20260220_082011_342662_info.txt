@@ -1,0 +1,1 @@
+baseline=10, boundary_med=28, boundary_x=10, gap=18, max_gap_seen=18, match=0.761, latch_mode=False, fail_part_if_maxgap=False
