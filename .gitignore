@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Build folders
+build/
+dist/
+*.spec
+
+# Executables / packages
+*.exe
+*.pkg
+*.msi
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
